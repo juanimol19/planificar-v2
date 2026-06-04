@@ -4,9 +4,10 @@ import DirectorStatsCard from '@/components/director/DirectorStatsCard.vue'
 
 <template>
   <div>
-    <h1>Dashboard Director</h1>
-
-    <p>Resumen general del sistema</p>
+    <div class="dashboard-header">
+  <h1>Dashboard</h1>
+  <p>Resumen general de la actividad académica.</p>
+</div>
 
     <div class="stats-grid">
 

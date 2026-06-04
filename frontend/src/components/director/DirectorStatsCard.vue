@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Card from 'primevue/card'
+
 defineProps<{
   title: string
   value: number
@@ -7,34 +9,33 @@ defineProps<{
 </script>
 
 <template>
-  <div class="stats-card">
-    <div class="stats-header">
-      <i :class="icon"></i>
-    </div>
+  <Card>
+    <template #content>
+      <div class="card-content">
+        <i :class="icon"></i>
 
-    <h3>{{ title }}</h3>
-
-    <span>{{ value }}</span>
-  </div>
+        <div>
+          <h3>{{ title }}</h3>
+          <span>{{ value }}</span>
+        </div>
+      </div>
+    </template>
+  </Card>
 </template>
 
 <style scoped>
-.stats-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+.card-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.stats-header {
-  margin-bottom: 1rem;
-}
-
-.stats-header i {
-  font-size: 1.5rem;
+i {
+  font-size: 2rem;
 }
 
 h3 {
+  margin: 0;
   color: #64748b;
 }
 
