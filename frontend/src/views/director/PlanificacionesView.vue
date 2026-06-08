@@ -4,7 +4,9 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 
-const planificaciones = [
+import type { Planificacion } from '@/types/Planificacion'
+
+const planificaciones: Planificacion[] = [
   {
     id: 1,
     docente: 'Juan Pérez',
@@ -21,7 +23,7 @@ const planificaciones = [
     id: 3,
     docente: 'Carlos López',
     curso: '6° A',
-    estado: 'Corrección',
+    estado: 'Correccion',
   },
 ]
 </script>
