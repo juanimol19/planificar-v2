@@ -31,16 +31,17 @@ defineProps<{
 }
 
 i {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 
 h3 {
   margin: 0;
   color: #64748b;
+  font-size: .9rem;
 }
 
 span {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
 }
 </style>

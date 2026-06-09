@@ -3,7 +3,7 @@ import DirectorCursosTable from '@/components/director/DirectorCursosTable.vue'
 </script>
 
 <template>
-  <div>
+  <div class="page-header">
     <h1>Cursos</h1>
 
     <p>
@@ -13,3 +13,19 @@ import DirectorCursosTable from '@/components/director/DirectorCursosTable.vue'
     <DirectorCursosTable />
   </div>
 </template>
+
+<style scoped>  
+
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  margin-bottom: .5rem;
+}
+
+.page-header p {
+  color: #64748b;
+}
+
+</style>

@@ -7,18 +7,22 @@
 
     <nav class="menu">
       <RouterLink to="/" class="menu-item">
+        <i class="pi pi-home"></i>
         Dashboard
       </RouterLink>
 
       <RouterLink to="/docentes" class="menu-item">
+        <i class="pi pi-users"></i>
         Docentes
       </RouterLink>
 
       <RouterLink to="/cursos" class="menu-item">
+        <i class="pi pi-book"></i>
         Cursos
       </RouterLink>
 
       <RouterLink to="/planificaciones" class="menu-item">
+        <i class="pi pi-file"></i>
         Planificaciones
       </RouterLink>
     </nav>
@@ -60,7 +64,25 @@
 }
 
 .router-link-active {
-  font-weight: bold;
+  background-color: #334155;
   color: #60a5fa;
+  font-weight: 600;
+  border-radius: 8px;
+  padding-left: 0.75rem;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  text-decoration: none;
+  color: white;
+  padding: 0.8rem 0;
+  transition: 0.2s;
+}
+
+.menu-item i {
+  font-size: 1rem;
 }
 </style>

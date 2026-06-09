@@ -42,8 +42,8 @@ import DirectorStatsCard from '@/components/director/DirectorStatsCard.vue'
 <style scoped>
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
   margin-top: 2rem;
 }
 </style>
