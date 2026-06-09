@@ -6,6 +6,11 @@ import Button from 'primevue/button'
 
 import type { Planificacion } from '@/types/Planificacion'
 
+import { ref } from 'vue'
+import DirectorPlanificacionDialog from './DirectorPlanificacionDialog.vue'
+
+const showDialog = ref(false)
+
 const planificaciones: Planificacion[] = [
   {
     id: 1,
@@ -62,6 +67,12 @@ const planificaciones: Planificacion[] = [
           label="Ver"
           icon="pi pi-eye"
           size="small"
+          @click="showDialog = true"
+        />
+
+        <DirectorPlanificacionDialog
+        :visible="showDialog"
+        @close="showDialog = false"
         />
       </template>
     </Column>
