@@ -1,42 +1,38 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
 import DirectorLayout from '@/layouts/DirectorLayout.vue'
-
-import DirectorDashboardView from '@/views/director/DirectorDashboardView.vue'
-import DocentesView from '@/views/director/DocentesView.vue'
-import CursosView from '@/views/director/CursosView.vue'
-import PlanificacionesView from '@/views/director/PlanificacionesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-
   routes: [
     {
-      path: '/',
+      path: '/director',
       component: DirectorLayout,
-
       children: [
         {
-          path: '',
-          name: 'dashboard',
-          component: DirectorDashboardView,
+          path: 'inicio',
+          name: 'director-inicio',
+          component: () => import('@/views/director/DirectorDashboardView.vue'),
         },
         {
           path: 'docentes',
-          name: 'docentes',
-          component: DocentesView,
+          name: 'director-docentes',
+          component: () => import('@/views/director/DocentesView.vue'),
         },
         {
           path: 'cursos',
-          name: 'cursos',
-          component: CursosView,
+          name: 'director-cursos',
+          component: () => import('@/views/director/CursosView.vue'),
         },
         {
           path: 'planificaciones',
-          name: 'planificaciones',
-          component: PlanificacionesView,
+          name: 'director-planificaciones',
+          component: () => import('@/views/director/PlanificacionesView.vue'),
         },
       ],
+    },
+    {
+      path: '/',
+      redirect: '/director/inicio',
     },
   ],
 })
