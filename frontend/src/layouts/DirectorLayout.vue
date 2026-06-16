@@ -1,31 +1,27 @@
 <script setup lang="ts">
-import DirectorSidebar from '@/components/director/DirectorSidebar.vue'
-import DirectorHeader from '@/components/director/DirectorHeader.vue'
+import DirectorNavbar from '@/components/director/DirectorNavbar.vue'
 </script>
 
 <template>
-  <div class="layout">
+  <div class="director-layout">
+    <DirectorNavbar />
 
-    <DirectorSidebar />
-
-    <main class="content">
-      <DirectorHeader />
-
+    <main class="director-main">
       <RouterView />
     </main>
-
   </div>
 </template>
 
 <style scoped>
-.layout {
+.director-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  background-color: #f5f7fa;
 }
 
-.content {
+.director-main {
   flex: 1;
   padding: 2rem;
-  background: #f8fafc;
 }
 </style>
