@@ -10,28 +10,32 @@ import { RouterLink } from 'vue-router'
 
     <ul class="navbar-links">
       <li>
-        <RouterLink to="/">
-          Dashboard
-        </RouterLink>
-      </li>
+  <RouterLink to="/">
+    <i class="pi pi-home"></i>
+    Dashboard
+  </RouterLink>
+</li>
 
-      <li>
-        <RouterLink to="/docentes">
-          Docentes
-        </RouterLink>
-      </li>
+<li>
+  <RouterLink to="/docentes">
+    <i class="pi pi-users"></i>
+    Docentes
+  </RouterLink>
+</li>
 
-      <li>
-        <RouterLink to="/cursos">
-          Cursos
-        </RouterLink>
-      </li>
+<li>
+  <RouterLink to="/cursos">
+    <i class="pi pi-book"></i>
+    Cursos
+  </RouterLink>
+</li>
 
-      <li>
-        <RouterLink to="/planificaciones">
-          Planificaciones
-        </RouterLink>
-      </li>
+<li>
+  <RouterLink to="/planificaciones">
+    <i class="pi pi-file"></i>
+    Planificaciones
+  </RouterLink>
+</li>
     </ul>
   </nav>
 </template>
@@ -96,5 +100,11 @@ import { RouterLink } from 'vue-router'
 
 .navbar-links a.router-link-active {
   background: #1e3a8a;
+}
+
+.navbar-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>
