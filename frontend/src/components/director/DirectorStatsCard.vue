@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import Card from 'primevue/card'
-
 defineProps<{
   title: string
   value: number
@@ -9,80 +7,96 @@ defineProps<{
 </script>
 
 <template>
-  <Card class="stats-card">
-    <template #content>
-      <div class="card-content">
-
-        <div class="icon-container">
-          <i :class="icon"></i>
-        </div>
-
-        <div class="info">
-          <h3>{{ title }}</h3>
-          <span>{{ value }}</span>
-        </div>
-
-      </div>
-    </template>
-  </Card>
+  <div class="stats-card">
+    <div class="card-icon">
+      <i :class="`ti ${icon}`" aria-hidden="true"></i>
+    </div>
+    <div class="card-info">
+      <p class="card-title">{{ title }}</p>
+      <span class="card-value">{{ value }}</span>
+    </div>
+  </div>
 </template>
 
 <style scoped>
 .stats-card {
-  border-radius: 18px;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
 .stats-card:hover {
-  transform: translateY(-4px);
-
-  box-shadow:
-    0 8px 24px rgba(37, 99, 235, 0.15);
+  border-color: #2563eb;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+  transform: translateY(-2px);
 }
 
-.card-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.stats-card:active {
+  transform: translateY(0px) scale(0.99);
+  box-shadow: none;
 }
 
-.icon-container {
-  width: 64px;
-  height: 64px;
+.dark-mode .stats-card {
+  background: #1a1a1a;
+  border-color: #1e3a8a;
+}
 
-  border-radius: 16px;
+.dark-mode .stats-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+}
 
-  background: rgba(37, 99, 235, 0.1);
-
+.card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1.5px solid rgba(37, 99, 235, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.icon-container i {
-  font-size: 2rem;
   color: #2563eb;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
-.info {
+.dark-mode .card-icon {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(29, 78, 216, 0.2);
+  color: #60a5fa;
+}
+
+.card-info {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
-.info h3 {
-  margin: 0;
-
-  font-size: 0.9rem;
-
-  color: #64748b;
-}
-
-.info span {
-  font-size: 2rem;
+.card-title {
+  font-size: 13px;
   font-weight: 700;
+  color: #5a6a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 
-  color: #0f172a;
+.dark-mode .card-title {
+  color: #aabbcc;
+}
+
+.card-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a2a3a;
+  line-height: 1;
+}
+
+.dark-mode .card-value {
+  color: #ffffff;
 }
 </style>
