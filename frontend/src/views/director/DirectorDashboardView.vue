@@ -3,11 +3,14 @@ import DirectorStatsCard from '@/components/director/DirectorStatsCard.vue'
 </script>
 
 <template>
-  <div>
-    <div class="dashboard-header">
-  <h1>Dashboard</h1>
-  <p>Resumen general de la actividad académica.</p>
-</div>
+  <div class="dashboard-wrapper">
+
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h1>Bienvenido Director</h1>
+        <p>Panel de gestión académica y seguimiento institucional.</p>
+      </div>
+    </div>
 
     <div class="stats-grid">
 
@@ -36,14 +39,38 @@ import DirectorStatsCard from '@/components/director/DirectorStatsCard.vue'
       />
 
     </div>
+
   </div>
 </template>
 
 <style scoped>
+.dashboard-wrapper {
+  width: 100%;
+}
+
+.welcome-banner {
+  background: #2563eb;
+  border: 2px solid #1e40af;
+  border-radius: 16px;
+
+  padding: 1.5rem 2rem;
+
+  margin-bottom: 2rem;
+}
+
+.welcome-text h1 {
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-text p {
+  color: rgba(255,255,255,0.85);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
   gap: 1.5rem;
-  margin-top: 2rem;
 }
 </style>

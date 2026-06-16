@@ -9,39 +9,80 @@ defineProps<{
 </script>
 
 <template>
-  <Card>
+  <Card class="stats-card">
     <template #content>
       <div class="card-content">
-        <i :class="icon"></i>
 
-        <div>
+        <div class="icon-container">
+          <i :class="icon"></i>
+        </div>
+
+        <div class="info">
           <h3>{{ title }}</h3>
           <span>{{ value }}</span>
         </div>
+
       </div>
     </template>
   </Card>
 </template>
 
 <style scoped>
+.stats-card {
+  border-radius: 18px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 8px 24px rgba(37, 99, 235, 0.15);
+}
+
 .card-content {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-i {
-  font-size: 2.5rem;
+.icon-container {
+  width: 64px;
+  height: 64px;
+
+  border-radius: 16px;
+
+  background: rgba(37, 99, 235, 0.1);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-h3 {
+.icon-container i {
+  font-size: 2rem;
+  color: #2563eb;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.info h3 {
   margin: 0;
+
+  font-size: 0.9rem;
+
   color: #64748b;
-  font-size: .9rem;
 }
 
-span {
-  font-size: 2.2rem;
+.info span {
+  font-size: 2rem;
   font-weight: 700;
+
+  color: #0f172a;
 }
 </style>
