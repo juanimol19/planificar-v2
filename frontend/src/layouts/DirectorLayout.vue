@@ -1,33 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-
 import DirectorNavbar from '@/components/director/DirectorNavbar.vue'
 import DirectorFooter from '@/components/director/DirectorFooter.vue'
 
 const isDark = ref(false)
-
-const toggleDark = () => {
-  isDark.value = !isDark.value
-}
+const toggleDark = () => { isDark.value = !isDark.value }
 </script>
 
 <template>
-  <div
-    class="director-layout"
-    :class="{ 'dark-mode': isDark }"
-  >
-    <DirectorNavbar
-      :is-dark="isDark"
-      @toggle-dark="toggleDark"
-    />
-
+  <div class="director-layout" :class="{ 'dark-mode': isDark }">
+    <DirectorNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
     <main class="director-main">
       <RouterView />
     </main>
-
-    <DirectorFooter
-      :is-dark="isDark"
-    />
+    <DirectorFooter :is-dark="isDark" />
   </div>
 </template>
 
@@ -37,6 +23,11 @@ const toggleDark = () => {
   flex-direction: column;
   min-height: 100vh;
   background-color: #f5f7fa;
+  transition: background-color 0.3s;
+}
+
+.director-layout.dark-mode {
+  background-color: #0a1520;
 }
 
 .director-main {
