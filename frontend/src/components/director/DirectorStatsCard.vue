@@ -1,13 +1,24 @@
 <script setup lang="ts">
-defineProps<{
+import { useRouter } from 'vue-router'
+
+const props = defineProps<{
   title: string
   value: number
   icon: string
+  to?: string
+  query?: Record<string, string>
 }>()
+
+const router = useRouter()
+
+const irADestino = () => {
+  if (!props.to) return
+  router.push({ path: props.to, query: props.query })
+}
 </script>
 
 <template>
-  <div class="stats-card">
+  <button class="stats-card" :class="{ 'sin-link': !to }" @click="irADestino">
     <div class="card-icon">
       <i :class="`ti ${icon}`" aria-hidden="true"></i>
     </div>
@@ -15,7 +26,8 @@ defineProps<{
       <p class="card-title">{{ title }}</p>
       <span class="card-value">{{ value }}</span>
     </div>
-  </div>
+    <i v-if="to" class="ti ti-chevron-right card-arrow" aria-hidden="true"></i>
+  </button>
 </template>
 
 <style scoped>
@@ -27,13 +39,27 @@ defineProps<{
   display: flex;
   align-items: center;
   gap: 20px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: arial, sans-serif;
   transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.stats-card.sin-link {
+  cursor: default;
 }
 
 .stats-card:hover {
   border-color: #2563eb;
   box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
   transform: translateY(-2px);
+}
+
+.stats-card.sin-link:hover {
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+  transform: none;
 }
 
 .stats-card:active {
@@ -75,6 +101,7 @@ defineProps<{
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
 }
 
 .card-title {
@@ -98,5 +125,15 @@ defineProps<{
 
 .dark-mode .card-value {
   color: #ffffff;
+}
+
+.card-arrow {
+  font-size: 18px;
+  color: #c0c8d0;
+  flex-shrink: 0;
+}
+
+.dark-mode .card-arrow {
+  color: #3a4a5a;
 }
 </style>
