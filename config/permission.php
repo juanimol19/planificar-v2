@@ -113,12 +113,15 @@ return [
         'team_foreign_key' => 'team_id',
     ],
 
-    /*
-     * When set to true, the method for checking permissions will be registered on the gate.
-     * Set this to false if you want to implement custom logic for checking permissions.
-     */
+'defaults' => [
+    'guard_name' => 'api', //ESTO HACE QUE FUNCIONEN LAS RUTAS PROTEGIDAS POR ROLES Y PERMISOS EN API
+],
 
-    'register_permission_check_method' => true,
+/*
+ * When set to true, the method for checking permissions will be registered on the gate.
+ * Set this to false if you want to implement custom logic for checking permissions.
+ */
+'register_permission_check_method' => true,
 
     /*
      * When set to true, Laravel\Octane\Events\OperationTerminated event listener will be registered
