@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Repositories\AuthRepository;
+use App\Repositories\Interfaces\AuthRepositoryInterface;
 
 // Interfaces
 use App\Repositories\Interfaces\PersonaRepositoryInterface;
@@ -48,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PlanificacionDiariaRepositoryInterface::class, PlanificacionDiariaRepository::class);
         $this->app->bind(EstadoAnualRepositoryInterface::class,       EstadoAnualRepository::class);
         $this->app->bind(EstadoDiariaRepositoryInterface::class,      EstadoDiariaRepository::class);
+        $this->app->bind(AuthRepositoryInterface::class,             AuthRepository::class);
     }
 
     public function boot(): void
