@@ -33,6 +33,11 @@ const router = createRouter({
           name: 'director-planificaciones',
           component: () => import('@/views/director/PlanificacionesView.vue'),
         },
+        {
+          path: 'perfil',
+          name: 'director-perfil',
+          component: () => import('@/views/director/DirectorPerfilView.vue'),
+        },
       ],
     },
     {
