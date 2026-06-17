@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import type { Curso } from '@/types/Curso'
+import type { Curso } from '@/types/Director/Curso'
 
 export const cursosMock = reactive<Curso[]>([
   {
