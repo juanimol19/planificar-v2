@@ -2,11 +2,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { directorActual } from '@/data/directorMock'
+import { useAuthStore } from '@/stores/auth'
 
 defineProps<{ isDark: boolean }>()
 defineEmits<{ (e: 'toggle-dark'): void }>()
 
 const router = useRouter()
+const authStore = useAuthStore()
 const menuAbierto = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 
@@ -23,8 +25,7 @@ const irAPerfil = () => {
 
 const cerrarSesion = () => {
   menuAbierto.value = false
-  // Acá iría la limpieza de token / store de auth cuando se conecte el back
-  router.push('/login')
+  authStore.logout()
 }
 
 const cerrarSiClickFuera = (e: MouseEvent) => {
