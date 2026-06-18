@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { cursosMock } from '@/data/Director/cursosMock'
+import { cursosMock } from '@/data/cursosMock'
 
 const route = useRoute()
 const router = useRouter()
