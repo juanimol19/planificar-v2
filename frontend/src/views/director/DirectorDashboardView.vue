@@ -30,10 +30,10 @@ const fechaHoy = computed(() =>
     </div>
 
     <div class="stats-grid">
-      <DirectorStatsCard title="Docentes"       :value="24" icon="ti-users"        />
-      <DirectorStatsCard title="Cursos"          :value="12" icon="ti-books"        />
-      <DirectorStatsCard title="Pendientes"      :value="8"  icon="ti-clock"        />
-      <DirectorStatsCard title="Aprobadas"       :value="35" icon="ti-circle-check" />
+      <DirectorStatsCard title="Docentes"  :value="24" icon="ti-users"        to="/director/docentes" />
+      <DirectorStatsCard title="Cursos"    :value="12" icon="ti-books"        to="/director/cursos" />
+      <DirectorStatsCard title="Pendientes" :value="8" icon="ti-clock"        to="/director/planificaciones" :query="{ estado: 'Pendiente' }" />
+      <DirectorStatsCard title="Aprobadas" :value="35" icon="ti-circle-check" to="/director/planificaciones" :query="{ estado: 'Aprobada' }" />
     </div>
 
   </div>

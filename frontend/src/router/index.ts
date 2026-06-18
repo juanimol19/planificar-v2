@@ -19,14 +19,39 @@ const router = createRouter({
           component: () => import('@/views/director/DocentesView.vue'),
         },
         {
+          path: 'docentes/nuevo',
+          name: 'director-docentes-nuevo',
+          component: () => import('@/views/director/DocenteFormView.vue'),
+        },
+        {
           path: 'cursos',
           name: 'director-cursos',
           component: () => import('@/views/director/CursosView.vue'),
         },
         {
+          path: 'cursos/nuevo',
+          name: 'director-cursos-nuevo',
+          component: () => import('@/views/director/CursoFormView.vue'),
+        },
+        {
+          path: 'cursos/:id',
+          name: 'director-curso-detalle',
+          component: () => import('@/views/director/CursoDetalleView.vue'),
+        },
+        {
           path: 'planificaciones',
           name: 'director-planificaciones',
           component: () => import('@/views/director/PlanificacionesView.vue'),
+        },
+        {
+          path: 'planificaciones/:id',
+          name: 'director-planificacion-detalle',
+          component: () => import('@/views/director/PlanificacionDetalleView.vue'),
+        },
+        {
+          path: 'perfil',
+          name: 'director-perfil',
+          component: () => import('@/views/director/DirectorPerfilView.vue'),
         },
       ],
     },

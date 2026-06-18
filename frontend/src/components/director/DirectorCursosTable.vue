@@ -1,22 +1,20 @@
 <script setup lang="ts">
-interface Curso {
-  id: number
-  nombre: string
-  turno: string
-  ciclo: string
-}
+import { useRouter } from 'vue-router'
+import { cursosMock } from '@/data/cursosMock'
 
-const cursos: Curso[] = [
-  { id: 1, nombre: '1° A', turno: 'Mañana', ciclo: 'Primario' },
-  { id: 2, nombre: '1° B', turno: 'Tarde',  ciclo: 'Primario' },
-  { id: 3, nombre: '2° A', turno: 'Mañana', ciclo: 'Primario' },
-  { id: 4, nombre: '3° A', turno: 'Mañana', ciclo: 'Primario' },
-  { id: 5, nombre: '3° B', turno: 'Tarde',  ciclo: 'Primario' },
-  { id: 6, nombre: '4° A', turno: 'Mañana', ciclo: 'Primario' },
-]
+const router = useRouter()
+
+const irAAgregar = () => router.push('/director/cursos/nuevo')
+const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
 </script>
 
 <template>
+  <div class="acciones-top">
+    <button class="btn-agregar" @click="irAAgregar">
+      <i class="ti ti-plus" aria-hidden="true"></i> Agregar curso
+    </button>
+  </div>
+
   <div class="tabla-wrapper">
     <table class="tabla">
       <thead>
@@ -25,11 +23,13 @@ const cursos: Curso[] = [
           <th>Curso</th>
           <th>Ciclo</th>
           <th>Turno</th>
+          <th>Docente</th>
+          <th>Alumnos</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="curso in cursos" :key="curso.id">
+        <tr v-for="curso in cursosMock" :key="curso.id">
           <td>{{ curso.id }}</td>
           <td>
             <div class="tabla-nombre">
@@ -45,8 +45,10 @@ const cursos: Curso[] = [
               {{ curso.turno }}
             </span>
           </td>
+          <td>{{ curso.docente }}</td>
+          <td>{{ curso.cantidadAlumnos }}</td>
           <td>
-            <button class="btn-tabla">
+            <button class="btn-tabla" @click="verCurso(curso.id)">
               <i class="ti ti-eye" aria-hidden="true"></i> Ver
             </button>
           </td>
@@ -57,8 +59,39 @@ const cursos: Curso[] = [
 </template>
 
 <style scoped>
+.acciones-top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.btn-agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2563eb;
+  color: #ffffff;
+  border: 2px solid #1e40af;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-agregar:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-agregar:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+}
+
 .tabla-wrapper {
-  margin-top: 1.5rem;
   border-radius: 16px;
   border: 1.5px solid rgba(0, 0, 0, 0.08);
   overflow: hidden;
