@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { agregarCurso } from '@/data/Director/cursosMock'
-import { docentesMock } from '@/data/Director/docentesMock'
+import { agregarCurso } from '@/data/cursosMock'
+import { docentesMock } from '@/data/docentesMock'
 
 const router = useRouter()
 
