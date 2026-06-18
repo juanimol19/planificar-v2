@@ -1,58 +1,62 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { Planificacion } from '@/types/Planificacion'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { planificacionesMock } from '@/data/planificacionesMock'
+import type { EstadoPlanificacion } from '@/types/Planificacion'
 
-const planificacionSeleccionada = ref<Planificacion | null>(null)
-const showModal = ref(false)
+const route = useRoute()
+const router = useRouter()
 
-const planificaciones: Planificacion[] = [
-  { id: 1, docente: 'Juan Pérez',    curso: '5° A', estado: 'Pendiente'  },
-  { id: 2, docente: 'María Gómez',   curso: '4° B', estado: 'Aprobada'   },
-  { id: 3, docente: 'Carlos López',  curso: '6° A', estado: 'Correccion' },
-  { id: 4, docente: 'Ana Martínez',  curso: '3° A', estado: 'Pendiente'  },
-  { id: 5, docente: 'Luis Fernández',curso: '2° B', estado: 'Aprobada'   },
-]
+const filtroEstado = ref<EstadoPlanificacion | 'Todas'>(
+  (route.query.estado as EstadoPlanificacion) || 'Todas'
+)
 
-const verPlanificacion = (plan: Planificacion) => {
-  planificacionSeleccionada.value = plan
-  showModal.value = true
+watch(() => route.query.estado, (nuevo) => {
+  filtroEstado.value = (nuevo as EstadoPlanificacion) || 'Todas'
+})
+
+const planificacionesFiltradas = computed(() => {
+  if (filtroEstado.value === 'Todas') return planificacionesMock
+  return planificacionesMock.filter(p => p.estado === filtroEstado.value)
+})
+
+const cambiarFiltro = (estado: EstadoPlanificacion | 'Todas') => {
+  filtroEstado.value = estado
+  router.replace({ query: estado === 'Todas' ? {} : { estado } })
 }
 
-const cerrarModal = () => {
-  showModal.value = false
-  planificacionSeleccionada.value = null
-}
+const verDetalle = (id: number) => router.push(`/director/planificaciones/${id}`)
 
-const aprobar = () => {
-  if (planificacionSeleccionada.value) {
-    planificacionSeleccionada.value.estado = 'Aprobada'
-  }
-  cerrarModal()
-}
-
-const pedir = () => {
-  if (planificacionSeleccionada.value) {
-    planificacionSeleccionada.value.estado = 'Correccion'
-  }
-  cerrarModal()
-}
+const formatearFecha = (fecha: string) =>
+  new Date(fecha).toLocaleDateString('es-AR', { year: 'numeric', month: 'short', day: 'numeric' })
 </script>
 
 <template>
+  <div class="filtros-bar">
+    <button class="filtro-btn" :class="{ activo: filtroEstado === 'Todas' }" @click="cambiarFiltro('Todas')">Todas</button>
+    <button class="filtro-btn" :class="{ activo: filtroEstado === 'Pendiente' }" @click="cambiarFiltro('Pendiente')">Pendientes</button>
+    <button class="filtro-btn" :class="{ activo: filtroEstado === 'Aprobada' }" @click="cambiarFiltro('Aprobada')">Aprobadas</button>
+    <button class="filtro-btn" :class="{ activo: filtroEstado === 'Correccion' }" @click="cambiarFiltro('Correccion')">En corrección</button>
+    <button class="filtro-btn" :class="{ activo: filtroEstado === 'Rechazada' }" @click="cambiarFiltro('Rechazada')">Rechazadas</button>
+  </div>
+
   <div class="tabla-wrapper">
     <table class="tabla">
       <thead>
         <tr>
           <th>ID</th>
+          <th>Título</th>
           <th>Docente</th>
           <th>Curso</th>
+          <th>Envío</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="plan in planificaciones" :key="plan.id">
+        <tr v-for="plan in planificacionesFiltradas" :key="plan.id">
           <td>{{ plan.id }}</td>
+          <td>{{ plan.titulo }}</td>
           <td>
             <div class="tabla-nombre">
               <div class="tabla-avatar">{{ plan.docente.split(' ').map(n => n[0]).join('') }}</div>
@@ -60,74 +64,77 @@ const pedir = () => {
             </div>
           </td>
           <td>{{ plan.curso }}</td>
+          <td>{{ formatearFecha(plan.fechaEnvio) }}</td>
           <td>
             <span class="badge" :class="{
               'badge-pendiente':  plan.estado === 'Pendiente',
               'badge-aprobada':   plan.estado === 'Aprobada',
               'badge-correccion': plan.estado === 'Correccion',
+              'badge-rechazada':  plan.estado === 'Rechazada',
             }">
               {{ plan.estado === 'Correccion' ? 'Corrección' : plan.estado }}
             </span>
           </td>
           <td>
-            <button class="btn-tabla" @click="verPlanificacion(plan)">
+            <button class="btn-tabla" @click="verDetalle(plan.id)">
               <i class="ti ti-eye" aria-hidden="true"></i> Ver
             </button>
           </td>
         </tr>
+        <tr v-if="!planificacionesFiltradas.length">
+          <td colspan="7" class="fila-vacia">No hay planificaciones en este estado.</td>
+        </tr>
       </tbody>
     </table>
-  </div>
-
-  <!-- Modal -->
-  <div v-if="showModal" class="modal-overlay" @click.self="cerrarModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>Planificación #{{ planificacionSeleccionada?.id }}</h2>
-        <button class="modal-close" @click="cerrarModal" aria-label="Cerrar">
-          <i class="ti ti-x"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-row">
-          <span class="modal-label">Docente</span>
-          <span class="modal-value">{{ planificacionSeleccionada?.docente }}</span>
-        </div>
-        <div class="modal-row">
-          <span class="modal-label">Curso</span>
-          <span class="modal-value">{{ planificacionSeleccionada?.curso }}</span>
-        </div>
-        <div class="modal-row">
-          <span class="modal-label">Estado</span>
-          <span class="badge" :class="{
-            'badge-pendiente':  planificacionSeleccionada?.estado === 'Pendiente',
-            'badge-aprobada':   planificacionSeleccionada?.estado === 'Aprobada',
-            'badge-correccion': planificacionSeleccionada?.estado === 'Correccion',
-          }">
-            {{ planificacionSeleccionada?.estado === 'Correccion' ? 'Corrección' : planificacionSeleccionada?.estado }}
-          </span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-modal btn-aprobar" @click="aprobar">
-          <i class="ti ti-circle-check" aria-hidden="true"></i> Aprobar
-        </button>
-        <button class="btn-modal btn-correccion" @click="pedir">
-          <i class="ti ti-pencil" aria-hidden="true"></i> Pedir corrección
-        </button>
-        <button class="btn-modal btn-cancelar" @click="cerrarModal">
-          Cancelar
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
 <style scoped>
+/* ─── Filtros ────────────────────────────────────────────────────────────────── */
+
+.filtros-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.filtro-btn {
+  background: #ffffff;
+  color: #5a6a7a;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.dark-mode .filtro-btn {
+  background: #1a1a1a;
+  color: #aabbcc;
+  border-color: #2c4f7c;
+}
+
+.filtro-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.filtro-btn.activo {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #1e40af;
+}
+
+.dark-mode .filtro-btn.activo {
+  background: #1d4ed8;
+}
+
 /* ─── Tabla ──────────────────────────────────────────────────────────────────── */
 
 .tabla-wrapper {
-  margin-top: 1.5rem;
   border-radius: 16px;
   border: 1.5px solid rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -248,6 +255,13 @@ const pedir = () => {
   box-shadow: none;
 }
 
+.fila-vacia {
+  text-align: center;
+  color: #8a9aaa;
+  font-style: italic;
+  padding: 2rem;
+}
+
 /* ─── Badges ─────────────────────────────────────────────────────────────────── */
 
 .badge {
@@ -293,153 +307,15 @@ const pedir = () => {
   border: 1px solid #ed1c24;
 }
 
-/* ─── Modal ──────────────────────────────────────────────────────────────────── */
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+.badge-rechazada {
+  background: rgba(80, 80, 80, 0.12);
+  color: #404040;
+  border: 1px solid rgba(80, 80, 80, 0.25);
 }
 
-.modal {
-  background: #ffffff;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 480px;
-  padding: 2rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-}
-
-.dark-mode .modal {
-  background: #1a1a1a;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.modal-header h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a2a3a;
-}
-
-.dark-mode .modal-header h2 {
-  color: #ffffff;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #5a6a7a;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  transition: background 0.15s;
-}
-
-.modal-close:hover {
-  background: rgba(0,0,0,0.06);
-}
-
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 1.5rem;
-}
-
-.modal-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #8a9aaa;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  min-width: 80px;
-}
-
-.modal-value {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a2a3a;
-}
-
-.dark-mode .modal-value {
-  color: #e2e8f0;
-}
-
-.modal-footer {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.btn-modal {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-}
-
-.btn-modal:hover {
-  transform: translateY(-1px);
-}
-
-.btn-modal:active {
-  transform: translateY(0);
-}
-
-.btn-aprobar {
-  background: #2563eb;
-  color: #ffffff;
-  border-color: #1e40af;
-}
-
-.btn-aprobar:hover {
-  background: #1d4ed8;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-}
-
-.btn-correccion {
-  background: rgba(186, 117, 23, 0.12);
-  color: #854f0b;
-  border-color: rgba(186, 117, 23, 0.4);
-}
-
-.btn-correccion:hover {
-  background: rgba(186, 117, 23, 0.2);
-}
-
-.btn-cancelar {
-  background: #f5f7fa;
-  color: #5a6a7a;
-  border-color: rgba(0,0,0,0.1);
-}
-
-.btn-cancelar:hover {
-  background: #e2e8f0;
+.dark-mode .badge-rechazada {
+  background: rgba(150, 150, 150, 0.2);
+  color: #cccccc;
+  border: 1px solid #888888;
 }
 </style>
