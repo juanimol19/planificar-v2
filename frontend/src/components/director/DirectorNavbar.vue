@@ -105,8 +105,8 @@ onUnmounted(() => document.removeEventListener('click', cerrarSiClickFuera))
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 2rem;
-  height: 68px;
+  padding: 0.75rem 1rem;
+  height: 90px;
   background-color: #eff2f4;
   border-bottom: 0.5px solid rgba(177, 149, 149, 0.08);
   transition: background-color 0.3s, border-color 0.3s;
