@@ -1,40 +1,28 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { agregarDocente } from '@/data/docentesMock'
+import { registrarUsuario } from '@/services/directorService'
 
 const router = useRouter()
 
 const form = reactive({
-  nombre: '',
-  apellido: '',
-  dni: '',
+  name: '',
   email: '',
-  telefono: '',
-  grado: '',
-  fechaIngreso: '',
-  estado: 'Activo' as 'Activo' | 'Inactivo',
+  password: '',
+  password_confirmation: '',
+  role: 'docente' as 'docente' | 'vicedirector' | 'secretario',
 })
 
 const errores = ref<Record<string, string>>({})
 const enviado = ref(false)
-
-const grados = [
-  '1° A', '1° B', '2° A', '2° B', '3° A', '3° B',
-  '4° A', '4° B', '5° A', '5° B', '6° A', '6° B',
-]
+const cargando = ref(false)
+const errorServidor = ref('')
 
 const validar = (): boolean => {
   errores.value = {}
 
-  if (!form.nombre.trim())   errores.value.nombre = 'El nombre es obligatorio.'
-  if (!form.apellido.trim()) errores.value.apellido = 'El apellido es obligatorio.'
-
-  if (!form.dni.trim()) {
-    errores.value.dni = 'El DNI es obligatorio.'
-  } else if (!/^\d{7,8}$/.test(form.dni.trim())) {
-    errores.value.dni = 'El DNI debe tener 7 u 8 números.'
-  }
+  if (!form.name.trim())
+    errores.value.name = 'El nombre es obligatorio.'
 
   if (!form.email.trim()) {
     errores.value.email = 'El email es obligatorio.'
@@ -42,22 +30,44 @@ const validar = (): boolean => {
     errores.value.email = 'El email no tiene un formato válido.'
   }
 
-  if (!form.telefono.trim()) errores.value.telefono = 'El teléfono es obligatorio.'
-  if (!form.grado)           errores.value.grado = 'Seleccioná un grado.'
-  if (!form.fechaIngreso)    errores.value.fechaIngreso = 'La fecha de ingreso es obligatoria.'
+  if (!form.password) {
+    errores.value.password = 'La contraseña es obligatoria.'
+  } else if (form.password.length < 6) {
+    errores.value.password = 'La contraseña debe tener al menos 6 caracteres.'
+  }
+
+  if (!form.password_confirmation) {
+    errores.value.password_confirmation = 'Confirmá la contraseña.'
+  } else if (form.password !== form.password_confirmation) {
+    errores.value.password_confirmation = 'Las contraseñas no coinciden.'
+  }
 
   return Object.keys(errores.value).length === 0
 }
 
-const guardar = () => {
+const guardar = async () => {
   if (!validar()) return
 
-  agregarDocente({ ...form })
-  enviado.value = true
+  cargando.value = true
+  errorServidor.value = ''
 
-  setTimeout(() => {
-    router.push('/director/docentes')
-  }, 1200)
+  try {
+    await registrarUsuario({ ...form })
+    enviado.value = true
+    setTimeout(() => router.push('/director/docentes'), 1200)
+  } catch (error: any) {
+    const data = error.response?.data
+    if (data?.errors) {
+      // Errores de validación del backend
+      for (const [campo, mensajes] of Object.entries(data.errors)) {
+        errores.value[campo] = (mensajes as string[])[0]
+      }
+    } else {
+      errorServidor.value = data?.message ?? 'Ocurrió un error al registrar el usuario.'
+    }
+  } finally {
+    cargando.value = false
+  }
 }
 
 const cancelar = () => {
@@ -72,39 +82,24 @@ const cancelar = () => {
     </button>
 
     <div class="form-container">
-      <h1 class="paso-titulo">Agregar nuevo docente</h1>
-      <p class="paso-desc">Completá los datos del docente para registrarlo en el sistema.</p>
+      <h1 class="paso-titulo">Agregar nuevo usuario</h1>
+      <p class="paso-desc">Registrá las credenciales de acceso del nuevo usuario al sistema.</p>
 
       <div v-if="enviado" class="exito-box">
         <i class="ti ti-circle-check" aria-hidden="true"></i>
-        Docente agregado correctamente. Redirigiendo...
+        Usuario registrado correctamente. Redirigiendo...
       </div>
 
-      <form v-else @submit.prevent="guardar">
-        <div class="form-fila">
-          <div class="form-group">
-            <label for="nombre">Nombre</label>
-            <input id="nombre" v-model="form.nombre" type="text" placeholder="Ej: Juan" />
-            <span v-if="errores.nombre" class="error-msg">{{ errores.nombre }}</span>
-          </div>
-          <div class="form-group">
-            <label for="apellido">Apellido</label>
-            <input id="apellido" v-model="form.apellido" type="text" placeholder="Ej: Pérez" />
-            <span v-if="errores.apellido" class="error-msg">{{ errores.apellido }}</span>
-          </div>
-        </div>
+      <div v-if="errorServidor" class="error-box">
+        <i class="ti ti-alert-circle" aria-hidden="true"></i>
+        {{ errorServidor }}
+      </div>
 
-        <div class="form-fila">
-          <div class="form-group">
-            <label for="dni">DNI</label>
-            <input id="dni" v-model="form.dni" type="text" placeholder="Ej: 28456789" maxlength="8" />
-            <span v-if="errores.dni" class="error-msg">{{ errores.dni }}</span>
-          </div>
-          <div class="form-group">
-            <label for="telefono">Teléfono</label>
-            <input id="telefono" v-model="form.telefono" type="text" placeholder="Ej: 3624-112233" />
-            <span v-if="errores.telefono" class="error-msg">{{ errores.telefono }}</span>
-          </div>
+      <form v-if="!enviado" @submit.prevent="guardar">
+        <div class="form-group">
+          <label for="name">Nombre completo</label>
+          <input id="name" v-model="form.name" type="text" placeholder="Ej: Juan Pérez" />
+          <span v-if="errores.name" class="error-msg">{{ errores.name }}</span>
         </div>
 
         <div class="form-group">
@@ -115,31 +110,34 @@ const cancelar = () => {
 
         <div class="form-fila">
           <div class="form-group">
-            <label for="grado">Grado a cargo</label>
-            <select id="grado" v-model="form.grado">
-              <option value="" disabled>Seleccioná un grado</option>
-              <option v-for="g in grados" :key="g" :value="g">{{ g }}</option>
-            </select>
-            <span v-if="errores.grado" class="error-msg">{{ errores.grado }}</span>
+            <label for="password">Contraseña</label>
+            <input id="password" v-model="form.password" type="password" placeholder="Mínimo 6 caracteres" />
+            <span v-if="errores.password" class="error-msg">{{ errores.password }}</span>
           </div>
           <div class="form-group">
-            <label for="fechaIngreso">Fecha de ingreso</label>
-            <input id="fechaIngreso" v-model="form.fechaIngreso" type="date" />
-            <span v-if="errores.fechaIngreso" class="error-msg">{{ errores.fechaIngreso }}</span>
+            <label for="password_confirmation">Confirmar contraseña</label>
+            <input id="password_confirmation" v-model="form.password_confirmation" type="password" placeholder="Repetí la contraseña" />
+            <span v-if="errores.password_confirmation" class="error-msg">{{ errores.password_confirmation }}</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="estado">Estado</label>
-          <select id="estado" v-model="form.estado">
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
+          <label for="role">Rol</label>
+          <select id="role" v-model="form.role">
+            <option value="docente">Docente</option>
+            <option value="vicedirector">Vicedirector</option>
+            <option value="secretario">Secretario</option>
           </select>
         </div>
 
         <div class="form-nav">
-          <button type="button" class="btn-nav btn-anterior" @click="cancelar">Cancelar</button>
-          <button type="submit" class="btn-nav btn-submit">Guardar docente</button>
+          <button type="button" class="btn-nav btn-anterior" @click="cancelar" :disabled="cargando">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-nav btn-submit" :disabled="cargando">
+            <i v-if="cargando" class="ti ti-loader-2" aria-hidden="true"></i>
+            {{ cargando ? 'Registrando...' : 'Registrar usuario' }}
+          </button>
         </div>
       </form>
     </div>
