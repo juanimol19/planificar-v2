@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Persona extends Model
 {
@@ -13,6 +14,7 @@ class Persona extends Model
     protected $table = 'personas';
 
     protected $fillable = [
+        'user_id',
         'apellidos',
         'nombres',
         'dni',
@@ -27,7 +29,11 @@ class Persona extends Model
         'deleted_at'       => 'datetime',
     ];
 
-    // Una persona puede tener muchos persona_cargos
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function personaCargos(): HasMany
     {
         return $this->hasMany(PersonaCargo::class, 'personas_id');
