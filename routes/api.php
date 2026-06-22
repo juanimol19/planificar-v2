@@ -14,6 +14,7 @@ use App\Http\Controllers\PlanificacionDiariaController;
 use App\Http\Controllers\EstadosAnualController;
 use App\Http\Controllers\EstadosDiariaController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PerfilController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('logout', [AuthController::class, 'logout']);
 
+    // ── Perfil ──────────────────────────────────────────────
+    Route::get('mi-perfil',  [PerfilController::class, 'show']);
+    Route::put('mi-perfil',  [PerfilController::class, 'update']);
     // ── Solo Director ──────────────────────────────────────────────
     Route::middleware('role:director|vicedirector|secretario')->group(function () {
         Route::post('register', [AuthController::class, 'register']);

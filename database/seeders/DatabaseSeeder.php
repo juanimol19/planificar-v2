@@ -11,17 +11,17 @@ class DatabaseSeeder extends Seeder
         $this->call(RolePermissionSeeder::class); // primero los roles
         $this->call(UserSeeder::class);           // luego el usuario director
     
-        $this->call(PersonasSeeder::class);
+
         $this->call(CursoSeeder::class);
         $this->call(CargoSeeder::class);
         $this->call(SitRevistaSeeder::class);
         $this->call(AreasSeeder::class);
-        $this->call(PersonaCargoSeeder::class);
-        $this->call(CursadoSeeder::class);
-        $this->call(PersonaCargoCursadoSeeder::class);
-        $this->call(PlanificacionAnualSeeder::class);
-        $this->call(PlanificacionDiariaSeeder::class);
-        $this->call(EstadosAnualSeeder::class);
-        $this->call(EstadosDiariaSeeder::class);
+//       $this->call(PersonaCargoSeeder::class);
+//       $this->call(CursadoSeeder::class);
+//     $this->call(PersonaCargoCursadoSeeder::class);
+//      $this->call(PlanificacionAnualSeeder::class);
+//       $this->call(PlanificacionDiariaSeeder::class);
+//       $this->call(EstadosAnualSeeder::class);
+//       $this->call(EstadosDiariaSeeder::class);
     }
 }
