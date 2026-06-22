@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-const nombreDocente = 'Juan Pérez'
+import { useAuthStore } from '@/stores/auth'
+const authStore = useAuthStore()
+const nombreDocente = authStore.user?.name ?? ''
 
 const iniciales = computed(() =>
   nombreDocente.split(' ').map(n => n[0]).join('').toUpperCase()

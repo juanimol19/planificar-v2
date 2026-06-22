@@ -1,30 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import axios from 'axios'
+import { ref, onMounted } from 'vue'
+import apiClient from '@/api/axios'
+import { useAuthStore } from '@/stores/auth'
 
-// TODO: reemplazar por datos reales del usuario autenticado
-const persona = ref({
-  id: 1,
-  nombres: 'Juan',
-  apellidos: 'Pérez',
-  dni: '12345678',
-  email: 'juan.perez@email.com',
+interface Persona {
+  id: number
+  nombres: string
+  apellidos: string
+  dni: string | null
+  'e-mail': string | null
+  telefono: string | null
+  direccion: string | null
+  fecha_nacimiento: string | null
+}
+
+const authStore = useAuthStore()
+const fotoKey = ref(`perfil_foto_${authStore.user?.id}`)
+
+const persona = ref<Persona | null>(null)
+
+const form = ref({
+  'e-mail': '',
   telefono: '',
   direccion: '',
   fecha_nacimiento: '',
 })
 
-const form = ref({
-  'e-mail': persona.value.email,
-  telefono: persona.value.telefono,
-  direccion: persona.value.direccion,
-  fecha_nacimiento: persona.value.fecha_nacimiento,
-})
-
-const fotoPreview = ref<string | null>(localStorage.getItem('perfil_foto'))
+const fotoPreview = ref<string | null>(null)
+const cargando = ref(false)
 const guardando = ref(false)
 const exito = ref(false)
 const error = ref<string | null>(null)
+const errorCarga = ref<string | null>(null)
+
+function iniciales() {
+  if (!persona.value) return ''
+  return `${persona.value.nombres?.[0] ?? ''}${persona.value.apellidos?.[0] ?? ''}`.toUpperCase()
+}
 
 function handleFoto(e: Event) {
   const input = e.target as HTMLInputElement
@@ -33,13 +45,30 @@ function handleFoto(e: Event) {
   reader.onload = () => {
     const resultado = reader.result as string
     fotoPreview.value = resultado
-    localStorage.setItem('perfil_foto', resultado)
+    localStorage.setItem(fotoKey.value, resultado)
   }
   reader.readAsDataURL(input.files[0])
 }
 
-function iniciales() {
-  return `${persona.value.nombres[0] ?? ''}${persona.value.apellidos[0] ?? ''}`.toUpperCase()
+async function cargarPerfil() {
+  fotoKey.value = `perfil_foto_${authStore.user?.id}`
+  fotoPreview.value = localStorage.getItem(fotoKey.value)
+  cargando.value = true
+  errorCarga.value = null
+  try {
+    const response = await apiClient.get('/mi-perfil')
+    persona.value = response.data
+    form.value = {
+      'e-mail': response.data['e-mail'] ?? '',
+      telefono: response.data.telefono ?? '',
+      direccion: response.data.direccion ?? '',
+      fecha_nacimiento: response.data.fecha_nacimiento?.slice(0, 10) ?? '',
+    }
+  } catch {
+    errorCarga.value = 'No se pudieron cargar los datos del perfil.'
+  } finally {
+    cargando.value = false
+  }
 }
 
 async function guardar() {
@@ -47,118 +76,134 @@ async function guardar() {
   exito.value = false
   error.value = null
   try {
-    await axios.put(`/api/personas/${persona.value.id}`, form.value)
+    const response = await apiClient.put('/mi-perfil', form.value)
+    persona.value = response.data.persona
     exito.value = true
-  } catch {
-    error.value = 'Ocurrió un error al guardar. Intentá de nuevo.'
+  } catch (e: any) {
+    error.value = e.response?.data?.message ?? 'Ocurrió un error al guardar. Intentá de nuevo.'
   } finally {
     guardando.value = false
   }
 }
+
+onMounted(cargarPerfil)
 </script>
 
 <template>
   <div class="perfil-wrap">
 
-    <!-- Avatar -->
-    <div class="perfil-avatar-seccion">
-      <div class="perfil-avatar">
-        <img v-if="fotoPreview" :src="fotoPreview" alt="Foto de perfil" class="perfil-avatar-img" />
-        <span v-else class="perfil-avatar-iniciales">{{ iniciales() }}</span>
-      </div>
-      <label class="perfil-btn-foto">
-        <i class="ti ti-camera"></i>
-        Cambiar foto
-        <input type="file" accept="image/*" class="perfil-input-file" @change="handleFoto" />
-      </label>
+    <!-- Estado de carga -->
+    <div v-if="cargando" class="perfil-cargando">
+      <i class="ti ti-loader-2"></i> Cargando perfil...
     </div>
 
-    <!-- Datos de solo lectura -->
-    <div class="perfil-card">
-      <h3 class="perfil-seccion-titulo">
-        <i class="ti ti-lock"></i>
-        Datos personales
-      </h3>
-      <p class="perfil-seccion-desc">Estos datos son gestionados por el director y no pueden modificarse.</p>
-      <div class="perfil-grid">
-        <div class="perfil-campo">
-          <label class="perfil-label">Nombres</label>
-          <div class="perfil-valor-readonly">{{ persona.nombres }}</div>
-        </div>
-        <div class="perfil-campo">
-          <label class="perfil-label">Apellidos</label>
-          <div class="perfil-valor-readonly">{{ persona.apellidos }}</div>
-        </div>
-        <div class="perfil-campo">
-          <label class="perfil-label">DNI</label>
-          <div class="perfil-valor-readonly">{{ persona.dni }}</div>
-        </div>
-      </div>
+    <div v-else-if="errorCarga" class="perfil-msg-error">
+      <i class="ti ti-alert-circle"></i> {{ errorCarga }}
     </div>
 
-    <!-- Datos editables -->
-    <div class="perfil-card">
-      <h3 class="perfil-seccion-titulo">
-        <i class="ti ti-edit"></i>
-        Información de contacto
-      </h3>
-      <p class="perfil-seccion-desc">Podés actualizar estos datos en cualquier momento.</p>
-      <div class="perfil-grid">
-        <div class="perfil-campo">
-          <label class="perfil-label">Email</label>
-          <input
-            v-model="form['e-mail']"
-            type="email"
-            class="perfil-input"
-            placeholder="tu@email.com"
-          />
+    <template v-else-if="persona">
+
+      <!-- Avatar -->
+      <div class="perfil-avatar-seccion">
+        <div class="perfil-avatar">
+          <img v-if="fotoPreview" :src="fotoPreview" alt="Foto de perfil" class="perfil-avatar-img" />
+          <span v-else class="perfil-avatar-iniciales">{{ iniciales() }}</span>
         </div>
-        <div class="perfil-campo">
-          <label class="perfil-label">Teléfono</label>
-          <input
-            v-model="form.telefono"
-            type="text"
-            class="perfil-input"
-            placeholder="Ej: 3624 123456"
-          />
-        </div>
-        <div class="perfil-campo">
-          <label class="perfil-label">Dirección</label>
-          <input
-            v-model="form.direccion"
-            type="text"
-            class="perfil-input"
-            placeholder="Calle y número"
-          />
-        </div>
-        <div class="perfil-campo">
-          <label class="perfil-label">Fecha de nacimiento</label>
-          <input
-            v-model="form.fecha_nacimiento"
-            type="date"
-            class="perfil-input"
-          />
+        <label class="perfil-btn-foto">
+          <i class="ti ti-camera"></i>
+          Cambiar foto
+          <input type="file" accept="image/*" class="perfil-input-file" @change="handleFoto" />
+        </label>
+      </div>
+
+      <!-- Datos de solo lectura -->
+      <div class="perfil-card">
+        <h3 class="perfil-seccion-titulo">
+          <i class="ti ti-lock"></i>
+          Datos personales
+        </h3>
+        <p class="perfil-seccion-desc">Estos datos son gestionados por el director y no pueden modificarse.</p>
+        <div class="perfil-grid">
+          <div class="perfil-campo">
+            <label class="perfil-label">Nombres</label>
+            <div class="perfil-valor-readonly">{{ persona.nombres }}</div>
+          </div>
+          <div class="perfil-campo">
+            <label class="perfil-label">Apellidos</label>
+            <div class="perfil-valor-readonly">{{ persona.apellidos }}</div>
+          </div>
+          <div class="perfil-campo">
+            <label class="perfil-label">DNI</label>
+            <div class="perfil-valor-readonly">{{ persona.dni ?? '—' }}</div>
+          </div>
         </div>
       </div>
 
-      <!-- Feedback -->
-      <p v-if="exito" class="perfil-msg-exito">
-        <i class="ti ti-check"></i>
-        Datos guardados correctamente.
-      </p>
-      <p v-if="error" class="perfil-msg-error">
-        <i class="ti ti-alert-circle"></i>
-        {{ error }}
-      </p>
+      <!-- Datos editables -->
+      <div class="perfil-card">
+        <h3 class="perfil-seccion-titulo">
+          <i class="ti ti-edit"></i>
+          Información de contacto
+        </h3>
+        <p class="perfil-seccion-desc">Podés actualizar estos datos en cualquier momento.</p>
+        <div class="perfil-grid">
+          <div class="perfil-campo">
+            <label class="perfil-label">Email</label>
+            <input
+              v-model="form['e-mail']"
+              type="email"
+              class="perfil-input"
+              placeholder="tu@email.com"
+            />
+          </div>
+          <div class="perfil-campo">
+            <label class="perfil-label">Teléfono</label>
+            <input
+              v-model="form.telefono"
+              type="text"
+              class="perfil-input"
+              placeholder="Ej: 3624 123456"
+            />
+          </div>
+          <div class="perfil-campo">
+            <label class="perfil-label">Dirección</label>
+            <input
+              v-model="form.direccion"
+              type="text"
+              class="perfil-input"
+              placeholder="Calle y número"
+            />
+          </div>
+          <div class="perfil-campo">
+            <label class="perfil-label">Fecha de nacimiento</label>
+            <input
+              v-model="form.fecha_nacimiento"
+              type="date"
+              class="perfil-input"
+            />
+          </div>
+        </div>
 
-      <!-- Botón guardar -->
-      <div class="perfil-acciones">
-        <button class="perfil-btn-guardar" :disabled="guardando" @click="guardar">
-          <i :class="guardando ? 'ti ti-loader-2' : 'ti ti-device-floppy'"></i>
-          {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
-        </button>
+        <!-- Feedback -->
+        <p v-if="exito" class="perfil-msg-exito">
+          <i class="ti ti-check"></i>
+          Datos guardados correctamente.
+        </p>
+        <p v-if="error" class="perfil-msg-error">
+          <i class="ti ti-alert-circle"></i>
+          {{ error }}
+        </p>
+
+        <!-- Botón guardar -->
+        <div class="perfil-acciones">
+          <button class="perfil-btn-guardar" :disabled="guardando" @click="guardar">
+            <i :class="guardando ? 'ti ti-loader-2' : 'ti ti-device-floppy'"></i>
+            {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
       </div>
-    </div>
+
+    </template>
 
   </div>
 </template>
