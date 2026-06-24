@@ -16,6 +16,9 @@ class UpdatePerfilRequest extends FormRequest
         $personaId = $this->user()->persona?->id;
 
         return [
+            'nombres'          => ['sometimes', 'string', 'max:255'],
+            'apellidos'        => ['sometimes', 'string', 'max:255'],
+            'dni'              => ['sometimes', 'string', 'max:20', "unique:personas,dni,{$personaId}"],
             'e-mail'           => ['sometimes', 'email', 'max:255', "unique:personas,e-mail,{$personaId}"],
             'telefono'         => ['sometimes', 'string', 'max:255'],
             'direccion'        => ['sometimes', 'string', 'max:255'],
