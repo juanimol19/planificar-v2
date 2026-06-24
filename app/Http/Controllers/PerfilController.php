@@ -26,7 +26,8 @@ class PerfilController extends Controller
 
     public function update(UpdatePerfilRequest $request): JsonResponse
     {
-        $persona = $request->user()->persona;
+        $user = $request->user();
+        $persona = $user->persona;
 
         if (!$persona) {
             return response()->json(['mensaje' => 'Perfil no encontrado'], 404);
@@ -34,9 +35,18 @@ class PerfilController extends Controller
 
         $persona = $this->personaService->update($persona->id, $request->validated());
 
+        // Sincronizar users.name si vienen nombres o apellidos
+        if ($request->has('nombres') || $request->has('apellidos')) {
+            $nombres   = $persona->nombres ?? $user->name;
+            $apellidos = $persona->apellidos ?? '';
+            $user->name = trim("{$nombres} {$apellidos}");
+            $user->save();
+        }
+
         return response()->json([
             'mensaje' => 'Perfil actualizado correctamente',
             'persona' => $persona,
+            'name'    => $user->name,
         ]);
     }
 }

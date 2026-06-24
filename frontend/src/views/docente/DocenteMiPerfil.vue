@@ -31,10 +31,11 @@ const form = ref({
 
 const formOriginal = ref({ ...form.value })
 
-const modoEdicion = ref(false)
+const modoEdicionPersonal = ref(false)
 const fotoPreview = ref<string | null>(null)
 const cargando = ref(false)
-const guardando = ref(false)
+const guardandoPersonal = ref(false)
+const guardandoContacto = ref(false)
 const exito = ref(false)
 const error = ref<string | null>(null)
 const errorCarga = ref<string | null>(null)
@@ -83,40 +84,66 @@ async function cargarPerfil() {
 
 function activarEdicion() {
   formOriginal.value = { ...form.value }
-  modoEdicion.value = true
+  modoEdicionPersonal.value = true
   exito.value = false
   error.value = null
 }
 
 function cancelarEdicion() {
   form.value = { ...formOriginal.value }
-  modoEdicion.value = false
+  modoEdicionPersonal.value = false
   error.value = null
 }
 
-async function guardar() {
-  guardando.value = true
+async function guardarPersonal() {
+  guardandoPersonal.value = true
   exito.value = false
   error.value = null
   try {
-    const response = await apiClient.put('/mi-perfil', form.value)
+    const response = await apiClient.put('/mi-perfil', {
+      nombres: form.value.nombres,
+      apellidos: form.value.apellidos,
+      dni: form.value.dni,
+    })
     persona.value = response.data.persona
-    form.value = {
-      nombres: response.data.persona.nombres ?? '',
-      apellidos: response.data.persona.apellidos ?? '',
-      dni: response.data.persona.dni ?? '',
-      'e-mail': response.data.persona['e-mail'] ?? '',
-      telefono: response.data.persona.telefono ?? '',
-      direccion: response.data.persona.direccion ?? '',
-      fecha_nacimiento: response.data.persona.fecha_nacimiento?.slice(0, 10) ?? '',
-    }
+    form.value.nombres = response.data.persona.nombres ?? ''
+    form.value.apellidos = response.data.persona.apellidos ?? ''
+    form.value.dni = response.data.persona.dni ?? ''
     formOriginal.value = { ...form.value }
-    modoEdicion.value = false
+    modoEdicionPersonal.value = false
+    exito.value = true
+
+    // Sincronizar nombre en el store y localStorage
+    authStore.updateUser({ name: response.data.name })
+  } catch (e: any) {
+    error.value = e.response?.data?.message ?? 'Ocurrió un error al guardar.'
+  } finally {
+    guardandoPersonal.value = false
+  }
+}
+
+async function guardarContacto() {
+  guardandoContacto.value = true
+  exito.value = false
+  error.value = null
+  try {
+    const response = await apiClient.put('/mi-perfil', {
+      'e-mail': form.value['e-mail'],
+      telefono: form.value.telefono,
+      direccion: form.value.direccion,
+      fecha_nacimiento: form.value.fecha_nacimiento,
+    })
+    persona.value = response.data.persona
+    form.value['e-mail'] = response.data.persona['e-mail'] ?? ''
+    form.value.telefono = response.data.persona.telefono ?? ''
+    form.value.direccion = response.data.persona.direccion ?? ''
+    form.value.fecha_nacimiento = response.data.persona.fecha_nacimiento?.slice(0, 10) ?? ''
+    formOriginal.value = { ...form.value }
     exito.value = true
   } catch (e: any) {
-    error.value = e.response?.data?.message ?? 'Ocurrió un error al guardar. Intentá de nuevo.'
+    error.value = e.response?.data?.message ?? 'Ocurrió un error al guardar.'
   } finally {
-    guardando.value = false
+    guardandoContacto.value = false
   }
 }
 
@@ -159,7 +186,7 @@ onMounted(cargarPerfil)
               Datos personales
             </h3>
             <p class="perfil-seccion-desc">
-              <template v-if="!modoEdicion">
+              <template v-if="!modoEdicionPersonal">
                 Si encontrás un error en tus datos, podés corregirlos vos mismo.
               </template>
               <template v-else>
@@ -167,14 +194,14 @@ onMounted(cargarPerfil)
               </template>
             </p>
           </div>
-          <button v-if="!modoEdicion" class="perfil-btn-editar" @click="activarEdicion">
+          <button v-if="!modoEdicionPersonal" class="perfil-btn-editar" @click="activarEdicion">
             <i class="ti ti-pencil"></i>
             Editar
           </button>
         </div>
 
         <!-- Modo lectura -->
-        <div v-if="!modoEdicion" class="perfil-grid">
+        <div v-if="!modoEdicionPersonal" class="perfil-grid">
           <div class="perfil-campo">
             <label class="perfil-label">Nombres</label>
             <div class="perfil-valor-readonly">{{ persona.nombres }}</div>
@@ -193,42 +220,27 @@ onMounted(cargarPerfil)
         <div v-else class="perfil-grid">
           <div class="perfil-campo">
             <label class="perfil-label">Nombres</label>
-            <input
-              v-model="form.nombres"
-              type="text"
-              class="perfil-input"
-              placeholder="Nombres"
-            />
+            <input v-model="form.nombres" type="text" class="perfil-input" placeholder="Nombres" />
           </div>
           <div class="perfil-campo">
             <label class="perfil-label">Apellidos</label>
-            <input
-              v-model="form.apellidos"
-              type="text"
-              class="perfil-input"
-              placeholder="Apellidos"
-            />
+            <input v-model="form.apellidos" type="text" class="perfil-input" placeholder="Apellidos" />
           </div>
           <div class="perfil-campo">
             <label class="perfil-label">DNI</label>
-            <input
-              v-model="form.dni"
-              type="text"
-              class="perfil-input"
-              placeholder="Ej: 12345678"
-            />
+            <input v-model="form.dni" type="text" class="perfil-input" placeholder="Ej: 12345678" />
           </div>
         </div>
 
-        <!-- Acciones edición -->
-        <div v-if="modoEdicion" class="perfil-acciones perfil-acciones-edicion">
+        <!-- Acciones edición personal -->
+        <div v-if="modoEdicionPersonal" class="perfil-acciones perfil-acciones-edicion">
           <button class="perfil-btn-cancelar" @click="cancelarEdicion">
             <i class="ti ti-x"></i>
             Cancelar
           </button>
-          <button class="perfil-btn-guardar" :disabled="guardando" @click="guardar">
-            <i :class="guardando ? 'ti ti-loader-2' : 'ti ti-device-floppy'"></i>
-            {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+          <button class="perfil-btn-guardar" :disabled="guardandoPersonal" @click="guardarPersonal">
+            <i :class="guardandoPersonal ? 'ti ti-loader-2' : 'ti ti-device-floppy'"></i>
+            {{ guardandoPersonal ? 'Guardando...' : 'Guardar cambios' }}
           </button>
         </div>
       </div>
@@ -241,44 +253,25 @@ onMounted(cargarPerfil)
         </h3>
         <p class="perfil-seccion-desc">Podés actualizar estos datos en cualquier momento.</p>
         <div class="perfil-grid">
-<div class="perfil-campo">
-  <label class="perfil-label">Email</label>
-  <input
-    v-model="form['e-mail']"
-    type="email"
-    class="perfil-input"
-    placeholder="tu@email.com"
-  />
-  <p class="perfil-aviso-email">
-    <i class="ti ti-info-circle"></i>
-    Las notificaciones se envían al email con el que accedés al sistema. Si cambiás este campo, las notificaciones futuras llegarán a esta dirección.
-  </p>
-</div>
+          <div class="perfil-campo">
+            <label class="perfil-label">Email</label>
+            <input v-model="form['e-mail']" type="email" class="perfil-input" placeholder="tu@email.com" />
+            <p class="perfil-aviso-email">
+              <i class="ti ti-info-circle"></i>
+              Las notificaciones se envían al email con el que accedés al sistema. Si cambiás este campo, las notificaciones futuras llegarán a esta dirección.
+            </p>
+          </div>
           <div class="perfil-campo">
             <label class="perfil-label">Teléfono</label>
-            <input
-              v-model="form.telefono"
-              type="text"
-              class="perfil-input"
-              placeholder="Ej: 3624 123456"
-            />
+            <input v-model="form.telefono" type="text" class="perfil-input" placeholder="Ej: 3624 123456" />
           </div>
           <div class="perfil-campo">
             <label class="perfil-label">Dirección</label>
-            <input
-              v-model="form.direccion"
-              type="text"
-              class="perfil-input"
-              placeholder="Calle y número"
-            />
+            <input v-model="form.direccion" type="text" class="perfil-input" placeholder="Calle y número" />
           </div>
           <div class="perfil-campo">
             <label class="perfil-label">Fecha de nacimiento</label>
-            <input
-              v-model="form.fecha_nacimiento"
-              type="date"
-              class="perfil-input"
-            />
+            <input v-model="form.fecha_nacimiento" type="date" class="perfil-input" />
           </div>
         </div>
 
@@ -294,9 +287,9 @@ onMounted(cargarPerfil)
 
         <!-- Botón guardar contacto -->
         <div class="perfil-acciones">
-          <button class="perfil-btn-guardar" :disabled="guardando" @click="guardar">
-            <i :class="guardando ? 'ti ti-loader-2' : 'ti ti-device-floppy'"></i>
-            {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+          <button class="perfil-btn-guardar" :disabled="guardandoContacto" @click="guardarContacto">
+            <i :class="guardandoContacto ? 'ti ti-loader-2' : 'ti ti-device-floppy'"></i>
+            {{ guardandoContacto ? 'Guardando...' : 'Guardar cambios' }}
           </button>
         </div>
       </div>
