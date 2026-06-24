@@ -111,8 +111,8 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
 /* ─── Banner ─────────────────────────────────────────────────────────────────── */
 
 .inicio-wrapper .welcome-banner {
-  background: #33ccff;
-  border: 2px solid #29abe2;
+  background: #2563eb;
+  border: 2px solid #1e40af;
   border-radius: 16px;
   padding: 1.5rem 2rem;
   display: flex;
@@ -124,7 +124,7 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
 
 .dark-mode .inicio-wrapper .welcome-banner {
   background: #0f1923;
-  border-color: #1ab8f0;
+  border-color: #1d4ed8;
 }
 
 .inicio-wrapper .avatar {
@@ -181,8 +181,8 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
   display: inline-flex;
   align-items: center;
   background: #ffffff;
-  border: 2px solid #29abe2;
-  color: #29abe2;
+  border: 2px solid #2563eb;
+  color: #2563eb;
   border-radius: 999px;
   padding: 9px 20px;
   font-size: 14px;
@@ -193,13 +193,13 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
 
 .dark-mode .inicio-wrapper .filter-pill {
   background: #0f1923;
-  border-color: #1ab8f0;
-  color: #1ab8f0;
+  border-color: #1d4ed8;
+  color: #1d4ed8;
 }
 
 .inicio-wrapper .filter-pill.active {
-  background: #33ccff;
-  border-color: #29abe2;
+  background: #2563eb;
+  border-color: #1e40af;
   color: #ffffff;
 }
 
@@ -232,8 +232,8 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
 }
 
 .inicio-wrapper .plan-card:hover {
-  border-color: #29abe2;
-  box-shadow: 0 4px 16px rgba(41, 171, 226, 0.15);
+  border-color: #2563eb;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
   transform: translateY(-2px);
 }
 
@@ -248,28 +248,28 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
 }
 
 .dark-mode .inicio-wrapper .plan-card:hover {
-  border-color: #1ab8f0;
-  box-shadow: 0 4px 16px rgba(26, 184, 240, 0.15);
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 16px rgba(29, 78, 216, 0.15);
 }
 
 .inicio-wrapper .plan-icon {
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: rgba(51, 204, 255, 0.12);
-  border: 1.5px solid rgba(41, 171, 226, 0.25);
+  background: rgba(37, 99, 235, 0.12);
+  border: 1.5px solid rgba(30, 64, 175, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #29abe2;
+  color: #2563eb;
   font-size: 24px;
   flex-shrink: 0;
 }
 
 .dark-mode .inicio-wrapper .plan-icon {
-  background: rgba(26, 184, 240, 0.08);
-  border-color: rgba(13, 159, 214, 0.2);
-  color: #1ab8f0;
+  background: rgba(29, 78, 216, 0.08);
+  border-color: rgba(30, 64, 175, 0.2);
+  color: #1d4ed8;
 }
 
 .inicio-wrapper .plan-info {
@@ -363,7 +363,7 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
 
 .inicio-wrapper .arrow {
   font-size: 20px;
-  color: #29abe2;
+  color: #2563eb;
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
   margin-left: 4px;
