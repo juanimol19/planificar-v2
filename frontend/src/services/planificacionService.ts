@@ -1,5 +1,5 @@
 import apiClient from '@/api/axios'
-import type { PlanificacionAnualAPI, EstadoAnualAPI } from '@/types/planificacion'
+import type { PlanificacionAnualAPI, EstadoAnualAPI } from '@/types/planificacionAPI'
 
 // ─── Tipos del payload ────────────────────────────────────────────────────────
 
@@ -88,9 +88,10 @@ export const crearEstado = async (payload: CrearEstadoPayload): Promise<EstadoAn
  */
 export const estadoActual = (estados: EstadoAnualAPI[]): string => {
   if (!estados || estados.length === 0) return 'sin estado'
-  return [...estados].sort(
+  const ordenados = [...estados].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  )[0].estado
+  )
+  return ordenados[0]?.estado ?? 'sin estado'
 }
 
 /**
