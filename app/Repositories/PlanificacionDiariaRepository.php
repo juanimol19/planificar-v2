@@ -8,10 +8,16 @@ use Illuminate\Database\Eloquent\Collection;
 
 class PlanificacionDiariaRepository implements PlanificacionDiariaRepositoryInterface
 {
-    public function getAll(): Collection
-    {
-        return PlanificacionDiaria::with(['personaCargoCursado'])->get();
+    public function getAll(?int $personaCargoCursadoId = null): Collection
+{
+    $query = PlanificacionDiaria::with(['personaCargoCursado', 'estadosDiarias']);
+
+    if ($personaCargoCursadoId) {
+        $query->where('persona_cargo_cursado_id', $personaCargoCursadoId);
     }
+
+    return $query->get();
+}
 
     public function findById(int $id): ?PlanificacionDiaria
     {

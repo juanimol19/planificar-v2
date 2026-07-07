@@ -11,12 +11,13 @@ class UpdateEstadoDiariaRequest extends FormRequest
         return true;
     }
 
-    public function rules(): array
-    {
-        return [
-            'estado'                  => ['sometimes', 'string', 'max:45'],
-            'fecha'                   => ['sometimes', 'date'],
-            'planificacion_diaria_id' => ['sometimes', 'integer', 'exists:planificacion_diaria,id'],
-        ];
-    }
+public function rules(): array
+{
+    return [
+        'estado'                  => ['sometimes', 'string', 'max:45'],
+        'fecha'                   => ['sometimes', 'date'],
+        'observaciones'           => ['nullable', 'string'],
+        'planificacion_diaria_id' => ['sometimes', 'integer', 'exists:planificacion_diaria,id'],
+    ];
+}
 }

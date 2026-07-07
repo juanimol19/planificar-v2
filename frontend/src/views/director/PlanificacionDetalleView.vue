@@ -81,9 +81,9 @@ const confirmarCambioEstado = async () => {
       fecha: new Date().toISOString().slice(0, 10),
       planificacion_anual_id: plan.value.id,
     }
-    if (nuevoComentario.value.trim()) {
-      payload.comentario = nuevoComentario.value.trim()
-    }
+if (nuevoComentario.value.trim()) {
+  payload.observaciones = nuevoComentario.value.trim()
+}
     const nuevoEstadoObj = await crearEstado(payload)
     if (!plan.value.estados_anuales) plan.value.estados_anuales = []
     plan.value.estados_anuales.push(nuevoEstadoObj)
@@ -195,8 +195,9 @@ const volver = () => router.push('/director/planificaciones')
                 </span>
                 <span class="historial-fecha">{{ formatearFecha(h.fecha) }}</span>
               </div>
-              <p v-if="(h as any).comentario" class="historial-comentario">
-                "{{ (h as any).comentario }}"
+<p v-if="h.observaciones" class="historial-comentario">
+  "{{ h.observaciones }}"
+</p>
               </p>
             </div>
           </div>

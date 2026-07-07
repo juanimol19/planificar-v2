@@ -12,10 +12,10 @@ class PlanificacionDiariaService
         protected PlanificacionDiariaRepositoryInterface $planificacionDiariaRepository
     ) {}
 
-    public function getAll(): Collection
-    {
-        return $this->planificacionDiariaRepository->getAll();
-    }
+    public function getAll(?int $personaCargoCursadoId = null): Collection
+{
+    return $this->planificacionDiariaRepository->getAll($personaCargoCursadoId);
+}
 
     public function findById(int $id): ?PlanificacionDiaria
     {

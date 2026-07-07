@@ -19,7 +19,18 @@ export interface CrearEstadoPayload {
   estado: string
   fecha: string
   planificacion_anual_id: number
-  comentario?: string
+  observaciones?: string
+}
+
+export interface CrearPlanificacionDiariaPayload {
+  fecha_estimada: string
+  fecha_desarrollada: string
+  fecha_presentacion: string
+  contenidos_especificos: string
+  actividades: string
+  tareas: string
+  persona_cargo_cursado_id: number
+  tipo_planificacion: string
 }
 
 // ─── Planificaciones ──────────────────────────────────────────────────────────
@@ -79,6 +90,13 @@ export const eliminarPlanificacion = async (id: number): Promise<void> => {
 export const crearEstado = async (payload: CrearEstadoPayload): Promise<EstadoAnualAPI> => {
   const { data } = await apiClient.post('/estados-anual', payload)
   return data.estado ?? data
+}
+
+export const crearPlanificacionDiaria = async (
+  payload: CrearPlanificacionDiariaPayload,
+): Promise<any> => {
+  const { data } = await apiClient.post('/planificacion-diaria', payload)
+  return data.planificacion ?? data
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

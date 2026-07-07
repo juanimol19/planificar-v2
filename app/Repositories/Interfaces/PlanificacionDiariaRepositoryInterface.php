@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface PlanificacionDiariaRepositoryInterface
 {
-    public function getAll(): Collection;
+    public function getAll(?int $personaCargoCursadoId = null): Collection;
     public function findById(int $id): ?PlanificacionDiaria;
     public function create(array $data): PlanificacionDiaria;
     public function update(int $id, array $data): PlanificacionDiaria;

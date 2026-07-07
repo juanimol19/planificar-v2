@@ -14,10 +14,18 @@ class PlanificacionAnualController extends Controller
     ) {}
 
     public function index(): JsonResponse
-    {
-        $planificaciones = $this->planificacionAnualService->getAll();
-        return response()->json($planificaciones);
+{
+    $user = auth()->user();
+    $personaCargoCursadoId = null;
+
+    if ($user->hasRole('docente', 'api')) {
+        $personaCargo = $user->persona?->personaCargos?->first();
+        $personaCargoCursadoId = $personaCargo?->personaCargoCursados?->first()?->id;
     }
+
+    $planificaciones = $this->planificacionAnualService->getAll($personaCargoCursadoId);
+    return response()->json($planificaciones);
+}
 
     public function store(StorePlanificacionAnualRequest $request): JsonResponse
     {

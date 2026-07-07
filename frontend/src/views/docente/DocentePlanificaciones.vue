@@ -7,19 +7,22 @@ import PlanificacionDiariaPreview from '@/components/docente/PlanificacionDiaria
 import PlanificacionAnualPreview from '@/components/docente/PlanificacionAnualPreview.vue'
 import type { DatosAnual, DatosDiaria } from '@/types/planificacionAPI'
 import { materiaVacia } from '@/utils/planificacionAnual'
-import { crearPlanificacion } from '@/services/planificacionService'
+import { crearPlanificacion, crearPlanificacionDiaria } from '@/services/planificacionService'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 type TipoPlanificacion = 'diaria' | 'anual'
 
 const emit = defineEmits<{ (e: 'hay-datos', valor: boolean): void }>()
 
-const tipoSeleccionado  = ref<TipoPlanificacion | null>(null)
-const datosFormulario   = ref<DatosAnual | DatosDiaria | null>(null)
+const tipoSeleccionado   = ref<TipoPlanificacion | null>(null)
+const datosFormulario    = ref<DatosAnual | DatosDiaria | null>(null)
 const mostrarModalVolver = ref(false)
-const pasoAnual         = ref<1 | 2 | 3>(1)
-const planificacionId   = ref<number | null>(null)
-const enviandoPlan      = ref(false)
-const errorEnvio        = ref<string | null>(null)
+const pasoAnual          = ref<1 | 2 | 3>(1)
+const planificacionId    = ref<number | null>(null)
+const enviandoPlan       = ref(false)
+const errorEnvio         = ref<string | null>(null)
 
 const datosAnual = reactive<DatosAnual>({
   fecha_presentacion: '',
@@ -102,22 +105,12 @@ function cancelarVolver() {
   mostrarModalVolver.value = false
 }
 
-/**
- * Cuando el docente termina el formulario anual:
- * 1. Se hace POST /api/planificacion-anual al back con los datos
- * 2. Se guarda el id real que devuelve
- * 3. Se muestra el preview con ese id
- */
 async function handleSubmit(datos: DatosAnual | DatosDiaria) {
+  console.log('personaCargoCursadoId:', authStore.personaCargoCursadoId)
   errorEnvio.value = null
 
   if (tipoSeleccionado.value === 'anual') {
     const d = datos as DatosAnual
-
-    // Construimos el payload que espera el back
-    // Nota: areas_id y persona_cargo_cursado_id deberán venir del perfil del
-    // docente logueado cuando se conecte el auth real. Por ahora usamos 1
-    // como placeholder — reemplazá con los valores reales del store de auth.
     enviandoPlan.value = true
     try {
       const planCreada = await crearPlanificacion({
@@ -128,11 +121,11 @@ async function handleSubmit(datos: DatosAnual | DatosDiaria) {
         saberes: d.materias.map(m =>
           m.periodos.map(p => p.saberes).join(' | ')
         ).join(' // '),
-        criterios: d.materias.map(m => m.criterios_evaluacion).join(' // '),
-        bibliografia:     d.bibliografia,
-        diagnostico:      d.diagnostico,
-        areas_id:         1,   // TODO: traer del perfil del docente logueado
-        persona_cargo_cursado_id: 1,  // TODO: traer del perfil del docente logueado
+        criterios:    d.materias.map(m => m.criterios_evaluacion).join(' // '),
+        bibliografia: d.bibliografia,
+        diagnostico:  d.diagnostico,
+        areas_id:     1,
+        persona_cargo_cursado_id: authStore.personaCargoCursadoId ?? 0,
         tipo_planificacion: 'Anual',
       })
       planificacionId.value = planCreada.id
@@ -144,13 +137,30 @@ async function handleSubmit(datos: DatosAnual | DatosDiaria) {
       enviandoPlan.value = false
     }
   } else {
-    // Para diaria no hay endpoint todavía — mostramos preview directo
-    datosFormulario.value = datos
-    planificacionId.value = null
+    const d = datos as DatosDiaria
+    enviandoPlan.value = true
+    try {
+      const planCreada = await crearPlanificacionDiaria({
+        fecha_estimada:         d.fecha_estimada,
+        fecha_desarrollada:     d.fecha_desarrollada,
+        fecha_presentacion:     d.fecha_presentacion,
+        contenidos_especificos: d.contenidos_especificos,
+        actividades:            d.actividades,
+        tareas:                 d.tareas,
+        persona_cargo_cursado_id: authStore.personaCargoCursadoId ?? 0,
+        tipo_planificacion: 'Diaria',
+      })
+      planificacionId.value = planCreada.id
+      datosFormulario.value = datos
+    } catch (e) {
+      errorEnvio.value = 'Ocurrió un error al guardar la planificación. Verificá tu conexión e intentá de nuevo.'
+      console.error(e)
+    } finally {
+      enviandoPlan.value = false
+    }
   }
 }
 </script>
-
 <template>
   <div class="planificaciones-wrap">
 

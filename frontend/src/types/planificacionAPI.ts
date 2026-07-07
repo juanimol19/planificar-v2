@@ -39,10 +39,10 @@ export interface DatosDiaria {
 
 export interface EstadoAnualAPI {
   id: number
-  estado: string        // 'presentada' | 'aprobada' | 'correccion' | 'rechazada'
+  estado: string
   fecha: string
+  observaciones?: string
   planificacion_anual_id: number
-  comentario?: string
   created_at: string
   updated_at: string
 }

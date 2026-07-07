@@ -11,12 +11,13 @@ class UpdateEstadoAnualRequest extends FormRequest
         return true;
     }
 
-    public function rules(): array
-    {
-        return [
-            'estado'                 => ['sometimes', 'string', 'max:45'],
-            'fecha'                  => ['sometimes', 'date'],
-            'planificacion_anual_id' => ['sometimes', 'integer', 'exists:planificacion_anual,id'],
-        ];
-    }
+public function rules(): array
+{
+    return [
+        'estado'                 => ['sometimes', 'string', 'max:45'],
+        'fecha'                  => ['sometimes', 'date'],
+        'observaciones'          => ['nullable', 'string'],
+        'planificacion_anual_id' => ['sometimes', 'integer', 'exists:planificacion_anual,id'],
+    ];
+}
 }

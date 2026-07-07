@@ -8,10 +8,16 @@ use Illuminate\Database\Eloquent\Collection;
 
 class PlanificacionAnualRepository implements PlanificacionAnualRepositoryInterface
 {
-    public function getAll(): Collection
-    {
-        return PlanificacionAnual::with(['area', 'personaCargoCursado'])->get();
+public function getAll(?int $personaCargoCursadoId = null): Collection
+{
+    $query = PlanificacionAnual::with(['area', 'personaCargoCursado', 'estadosAnuales']);
+
+    if ($personaCargoCursadoId) {
+        $query->where('persona_cargo_cursado_id', $personaCargoCursadoId);
     }
+
+    return $query->get();
+}
 
     public function findById(int $id): ?PlanificacionAnual
     {

@@ -7,6 +7,7 @@ interface User {
   id: number
   name: string
   email: string
+  persona_cargo_cursado_id?: number
   [key: string]: unknown
 }
 
@@ -14,7 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const role = ref<string | null>(null)
   const token = ref<string | null>(null)
-
+  const personaCargoCursadoId = ref<number | null>(null)
   const isAuthenticated = computed(() => !!token.value)
 
   function redirectByRole() {
@@ -27,20 +28,24 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(email: string, password: string) {
-    const response = await apiClient.post('/login', { email, password })
-    const { user: userData, role: userRole, access_token } = response.data
+async function login(email: string, password: string) {
+  const response = await apiClient.post('/login', { email, password })
+  const { user: userData, role: userRole, access_token } = response.data
 
-    user.value = userData
-    role.value = userRole
-    token.value = access_token
+  user.value = userData
+  role.value = userRole
+  token.value = access_token
 
-    localStorage.setItem('access_token', access_token)
-    localStorage.setItem('auth_user', JSON.stringify(userData))
-    localStorage.setItem('auth_role', userRole)
+  localStorage.setItem('access_token', access_token)
+  localStorage.setItem('auth_user', JSON.stringify(userData))
+  localStorage.setItem('auth_role', userRole)
 
-    redirectByRole()
-  }
+  const perfilResponse = await apiClient.get('/mi-perfil')
+  personaCargoCursadoId.value = perfilResponse.data.persona_cargo_cursado_id ?? null
+  localStorage.setItem('auth_persona_cargo_cursado_id', String(personaCargoCursadoId.value ?? ''))
+
+  redirectByRole()
+}
 
   function logout() {
     user.value = null
@@ -51,6 +56,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('auth_user')
     localStorage.removeItem('auth_role')
 
+    localStorage.removeItem('auth_persona_cargo_cursado_id')
+
     router.push('/login')
   }
 
@@ -59,7 +66,10 @@ export const useAuthStore = defineStore('auth', () => {
     const storedUser = localStorage.getItem('auth_user')
     const storedRole = localStorage.getItem('auth_role')
 
-    if (storedToken && storedUser && storedRole) {
+    const storedPCCId = localStorage.getItem('auth_persona_cargo_cursado_id')
+    if (storedPCCId) personaCargoCursadoId.value = Number(storedPCCId)
+    
+      if (storedToken && storedUser && storedRole) {
       token.value = storedToken
       user.value = JSON.parse(storedUser)
       role.value = storedRole
@@ -73,13 +83,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    user,
-    role,
-    token,
-    isAuthenticated,
-    login,
-    logout,
-    initAuth,
-    updateUser,
-  }
+  user,
+  role,
+  token,
+  personaCargoCursadoId,
+  isAuthenticated,
+  login,
+  logout,
+  initAuth,
+  updateUser,
+}
 })
