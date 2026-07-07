@@ -12,10 +12,10 @@ class PlanificacionAnualService
         protected PlanificacionAnualRepositoryInterface $planificacionAnualRepository
     ) {}
 
-    public function getAll(): Collection
-    {
-        return $this->planificacionAnualRepository->getAll();
-    }
+public function getAll(?int $personaCargoCursadoId = null): Collection
+{
+    return $this->planificacionAnualRepository->getAll($personaCargoCursadoId);
+}
 
     public function findById(int $id): ?PlanificacionAnual
     {

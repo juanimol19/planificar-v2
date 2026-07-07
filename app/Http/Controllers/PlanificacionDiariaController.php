@@ -14,10 +14,18 @@ class PlanificacionDiariaController extends Controller
     ) {}
 
     public function index(): JsonResponse
-    {
-        $planificaciones = $this->planificacionDiariaService->getAll();
-        return response()->json($planificaciones);
+{
+    $user = auth()->user();
+    $personaCargoCursadoId = null;
+
+    if ($user->hasRole('docente', 'api')) {
+        $personaCargo = $user->persona?->personaCargos?->first();
+        $personaCargoCursadoId = $personaCargo?->personaCargoCursados?->first()?->id;
     }
+
+    $planificaciones = $this->planificacionDiariaService->getAll($personaCargoCursadoId);
+    return response()->json($planificaciones);
+}
 
     public function store(StorePlanificacionDiariaRequest $request): JsonResponse
     {

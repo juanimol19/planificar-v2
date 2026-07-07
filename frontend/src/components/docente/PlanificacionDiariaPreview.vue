@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import axios from 'axios'
+import apiClient from '@/api/axios'
 import { useExportarPlanificacion } from '@/composables/useExportarPlanificacion'
 
 const props = defineProps<{
@@ -27,11 +27,11 @@ async function confirmarPresentar() {
   presentando.value = true
   errorPresentar.value = null
   try {
-    await axios.post('/api/estados-diaria', {
-      estado: 'presentada',
-      fecha: new Date().toISOString().split('T')[0],
-      planificacion_diaria_id: props.planificacionId,
-    })
+await apiClient.post('/estados-diaria', {
+  estado: 'presentada',
+  fecha: new Date().toISOString().split('T')[0],
+  planificacion_diaria_id: props.planificacionId,
+})
     presentada.value = true
     mostrarModalPresentar.value = false
   } catch {

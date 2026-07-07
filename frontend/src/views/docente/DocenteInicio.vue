@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { getPlanificaciones, estadoActual, labelEstado, claseEstado } from '@/services/planificacionService'
+import type { PlanificacionAnualAPI } from '@/types/planificacionAPI'
+
 const authStore = useAuthStore()
 const nombreDocente = authStore.user?.name ?? ''
 
@@ -18,38 +20,41 @@ const fechaHoy = computed(() =>
   })
 )
 
-type Tipo = 'anual' | 'diaria'
-type Estado = 'borrador' | 'confirmada' | 'rechazada'
-
-interface Planificacion {
-  tipo: Tipo
-  materia: string
-  grado: string
-  fecha: string
-  estado: Estado
-}
-
-const planificaciones: Planificacion[] = [
-  { tipo: 'anual',  materia: 'Matemáticas',        grado: '3° grado', fecha: '05 jun 2026', estado: 'confirmada' },
-  { tipo: 'diaria', materia: 'Lengua y Literatura', grado: '4° grado', fecha: '03 jun 2026', estado: 'borrador'   },
-  { tipo: 'anual',  materia: 'Ciencias Naturales',  grado: '2° grado', fecha: '01 jun 2026', estado: 'confirmada' },
-  { tipo: 'diaria', materia: 'Educación Física',    grado: '5° grado', fecha: '28 may 2026', estado: 'borrador'   },
-  { tipo: 'anual',  materia: 'Ciencias Sociales',   grado: '1° grado', fecha: '20 may 2026', estado: 'rechazada'  },
-]
-const etiquetaEstado: Record<Estado, string> = {
-  borrador: 'Borrador',
-  confirmada: 'Aceptado',
-  rechazada: 'Rechazada',
-}
-
-const filtro = ref<'todas' | Tipo | Estado>('todas')
+const planificaciones = ref<PlanificacionAnualAPI[]>([])
+const cargando = ref(true)
+const error = ref<string | null>(null)
+const filtro = ref<'todas' | 'presentada' | 'aprobada' | 'correccion' | 'rechazada'>('todas')
 
 const planificacionesFiltradas = computed(() => {
-  if (filtro.value === 'todas') return planificaciones
-  return planificaciones.filter(p => p.tipo === filtro.value || p.estado === filtro.value)
+  if (filtro.value === 'todas') return planificaciones.value
+  return planificaciones.value.filter(p =>
+    estadoActual(p.estados_anuales ?? []) === filtro.value
+  )
 })
 
-const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-text'
+const formatearFecha = (fecha: string) =>
+  new Date(fecha).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+
+const ultimaObservacion = (p: PlanificacionAnualAPI): string | null => {
+  const estados = [...(p.estados_anuales ?? [])].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
+  return estados[0]?.observaciones ?? null
+}
+
+onMounted(async () => {
+  try {
+    planificaciones.value = await getPlanificaciones()
+  } catch {
+    error.value = 'No se pudieron cargar las planificaciones.'
+  } finally {
+    cargando.value = false
+  }
+})
 </script>
 
 <template>
@@ -66,37 +71,56 @@ const iconoPor = (tipo: Tipo) => tipo === 'anual' ? 'ti-calendar' : 'ti-file-tex
     <div class="toolbar">
       <span class="section-label">Mis planificaciones</span>
       <button
-        v-for="f in ['todas', 'anual', 'diaria', 'borrador', 'confirmada', 'rechazada']"
+        v-for="f in ['todas', 'presentada', 'aprobada', 'correccion', 'rechazada']"
         :key="f"
         class="filter-pill"
         :class="{ active: filtro === f }"
         @click="filtro = f as typeof filtro"
       >
-        {{ f.charAt(0).toUpperCase() + f.slice(1) }}
+        {{ f === 'todas' ? 'Todas' : labelEstado(f) }}
       </button>
     </div>
 
-    <div class="plan-list">
+    <div v-if="cargando" class="estado-info">
+      <i class="ti ti-loader-2 girando"></i> Cargando planificaciones...
+    </div>
+
+    <div v-else-if="error" class="estado-error">
+      <i class="ti ti-alert-circle"></i> {{ error }}
+    </div>
+
+    <div v-else-if="planificaciones.length === 0" class="estado-info">
+      <i class="ti ti-inbox"></i> Todavía no tenés planificaciones enviadas.
+    </div>
+
+    <div v-else class="plan-list">
       <div
-        v-for="(plan, index) in planificacionesFiltradas"
-        :key="index"
+        v-for="plan in planificacionesFiltradas"
+        :key="plan.id"
         class="plan-card"
       >
         <div class="plan-icon">
-          <i :class="`ti ${iconoPor(plan.tipo)}`" aria-hidden="true"></i>
+          <i class="ti ti-calendar" aria-hidden="true"></i>
         </div>
         <div class="plan-info">
-          <p class="plan-title">{{ plan.materia }}</p>
+          <p class="plan-title">{{ plan.tipo_planificacion }}</p>
           <p class="plan-meta">
-            {{ plan.tipo.charAt(0).toUpperCase() + plan.tipo.slice(1) }} — {{ plan.grado }}
+            Presentada el {{ formatearFecha(plan.fecha_presentacion) }}
+          </p>
+          <p v-if="ultimaObservacion(plan)" class="plan-observacion">
+            <i class="ti ti-message-2"></i> {{ ultimaObservacion(plan) }}
           </p>
         </div>
         <div class="plan-right">
-          <span class="badge" :class="`badge-${plan.estado}`">
-            {{ etiquetaEstado[plan.estado] }}
+          <span class="badge" :class="claseEstado(estadoActual(plan.estados_anuales ?? []))">
+            {{ labelEstado(estadoActual(plan.estados_anuales ?? [])) }}
           </span>
-          <span class="plan-date">{{ plan.fecha }}</span>
+          <span class="plan-date">{{ formatearFecha(plan.fecha_presentacion) }}</span>
         </div>
+      </div>
+
+      <div v-if="planificacionesFiltradas.length === 0" class="estado-info">
+        <i class="ti ti-filter-off"></i> No hay planificaciones con ese estado.
       </div>
     </div>
 

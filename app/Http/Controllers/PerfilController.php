@@ -14,15 +14,24 @@ class PerfilController extends Controller
     ) {}
 
     public function show(Request $request): JsonResponse
-    {
-        $persona = $request->user()->persona;
+{
+    $persona = $request->user()->persona?->load([
+        'personaCargos.personaCargoCursados'
+    ]);
 
-        if (!$persona) {
-            return response()->json(['mensaje' => 'Perfil no encontrado'], 404);
-        }
-
-        return response()->json($persona);
+    if (!$persona) {
+        return response()->json(['mensaje' => 'Perfil no encontrado'], 404);
     }
+
+    $personaCargoCursadoId = $persona->personaCargos->first()
+        ?->personaCargoCursados->first()
+        ?->id;
+
+    return response()->json([
+        'persona'                  => $persona,
+        'persona_cargo_cursado_id' => $personaCargoCursadoId,
+    ]);
+}
 
     public function update(UpdatePerfilRequest $request): JsonResponse
     {

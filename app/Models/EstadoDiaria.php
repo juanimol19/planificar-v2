@@ -9,11 +9,12 @@ class EstadoDiaria extends Model
 {
     protected $table = 'estados_diaria';
 
-    protected $fillable = [
-        'estado',
-        'fecha',
-        'planificacion_diaria_id',
-    ];
+protected $fillable = [
+    'estado',
+    'fecha',
+    'observaciones',
+    'planificacion_diaria_id',
+];
 
     protected $casts = [
         'fecha' => 'date',

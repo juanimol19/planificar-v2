@@ -11,12 +11,13 @@ class StoreEstadoAnualRequest extends FormRequest
         return true;
     }
 
-    public function rules(): array
-    {
-        return [
-            'estado'                 => ['required', 'string', 'max:45'],
-            'fecha'                  => ['required', 'date'],
-            'planificacion_anual_id' => ['required', 'integer', 'exists:planificacion_anual,id'],
-        ];
-    }
+public function rules(): array
+{
+    return [
+        'estado'                 => ['required', 'string', 'max:45'],
+        'fecha'                  => ['required', 'date'],
+        'observaciones'          => ['nullable', 'string'],
+        'planificacion_anual_id' => ['required', 'integer', 'exists:planificacion_anual,id'],
+    ];
+}
 }

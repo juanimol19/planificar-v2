@@ -9,11 +9,12 @@ class EstadoAnual extends Model
 {
     protected $table = 'estados_anual';
 
-    protected $fillable = [
-        'estado',
-        'fecha',
-        'planificacion_anual_id',
-    ];
+protected $fillable = [
+    'estado',
+    'fecha',
+    'observaciones',
+    'planificacion_anual_id',
+];
 
     protected $casts = [
         'fecha' => 'date',

@@ -11,12 +11,13 @@ class StoreEstadoDiariaRequest extends FormRequest
         return true;
     }
 
-    public function rules(): array
-    {
-        return [
-            'estado'                   => ['required', 'string', 'max:45'],
-            'fecha'                    => ['required', 'date'],
-            'planificacion_diaria_id'  => ['required', 'integer', 'exists:planificacion_diaria,id'],
-        ];
-    }
+public function rules(): array
+{
+    return [
+        'estado'                  => ['required', 'string', 'max:45'],
+        'fecha'                   => ['required', 'date'],
+        'observaciones'           => ['nullable', 'string'],
+        'planificacion_diaria_id' => ['required', 'integer', 'exists:planificacion_diaria,id'],
+    ];
+}
 }
