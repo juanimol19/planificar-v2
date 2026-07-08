@@ -13,6 +13,19 @@ class PersonaRepository implements PersonaRepositoryInterface
         return Persona::all();
     }
 
+    public function getDocentes(): Collection
+    {
+        return Persona::whereHas('user.roles', function ($query) {
+                $query->where('name', 'docente');
+            })
+            ->with([
+                'user.roles',
+                'personaCargos.cargo',
+                'personaCargos.personaCargoCursados.cursado.curso',
+            ])
+            ->get();
+    }
+
     public function findById(int $id): ?Persona
     {
         return Persona::find($id);

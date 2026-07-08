@@ -36,6 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Solo Director ──────────────────────────────────────────────
     Route::middleware('role:director|vicedirector|secretario')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
+
+        Route::get('personas-docentes', [PersonasController::class, 'docentes']);
+
         Route::apiResource('personas',              PersonasController::class);
         Route::apiResource('cargos',                CargosController::class);
         Route::apiResource('sit-revista',           SitRevistaController::class);

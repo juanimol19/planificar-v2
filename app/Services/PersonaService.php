@@ -17,6 +17,11 @@ class PersonaService
         return $this->personaRepository->getAll();
     }
 
+    public function getDocentes(): Collection
+    {
+        return $this->personaRepository->getDocentes();
+    }
+
     public function findById(int $id): ?Persona
     {
         return $this->personaRepository->findById($id);

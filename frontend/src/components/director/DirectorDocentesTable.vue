@@ -1,13 +1,69 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { docentesMock } from '@/data/docentesMock'
-import type { Docente } from '@/types/Docente'
+import { getDocentes } from '@/services/docenteService'
+import { getPlanificaciones, estadoActual, labelEstado } from '@/services/planificacionService'
+import type { Docente, PlanificacionResumen } from '@/types/Docente'
 
 const router = useRouter()
 
+const docentes = ref<Docente[]>([])
+const cargando = ref(true)
+const error = ref<string | null>(null)
+
 const docenteSeleccionado = ref<Docente | null>(null)
 const showModal = ref(false)
+
+const armarGrado = (docente: any): string => {
+  const cursado = docente.persona_cargos?.[0]?.persona_cargo_cursados?.[0]?.cursado
+  const curso = cursado?.curso
+  if (!curso) return 'Sin asignar'
+  return `${curso.grado} ${curso.seccion} - ${curso.turno}`
+}
+
+const cargarDocentes = async () => {
+  cargando.value = true
+  error.value = null
+  try {
+    const [docentesData, planificacionesData] = await Promise.all([
+      getDocentes(),
+      getPlanificaciones(),
+    ])
+
+    docentes.value = docentesData.map((docente) => {
+      // Todos los persona_cargo_cursado.id asignados a este docente
+      const cursadoIds = docente.persona_cargos.flatMap((pc) =>
+        pc.persona_cargo_cursados.map((pcc) => pcc.id),
+      )
+
+      const planificaciones: PlanificacionResumen[] = planificacionesData
+        .filter((p) => cursadoIds.includes(p.persona_cargo_cursado_id))
+        .map((p) => ({
+          id: p.id,
+          curso: armarGrado(docente),
+          estado: labelEstado(estadoActual(p.estados_anuales ?? [])),
+        }))
+
+      return {
+        id: docente.id,
+        nombre: docente.nombres,
+        apellido: docente.apellidos,
+        email: docente['e-mail'] ?? 'Sin email',
+        dni: docente.dni,
+        telefono: docente.telefono,
+        grado: armarGrado(docente),
+        planificaciones,
+      }
+    })
+  } catch (e) {
+    error.value = 'No se pudo cargar la lista de docentes.'
+    console.error(e)
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(cargarDocentes)
 
 const verPerfil = (docente: Docente) => {
   docenteSeleccionado.value = docente
@@ -22,10 +78,6 @@ const cerrarModal = () => {
 const irAAgregar = () => {
   router.push('/director/docentes/nuevo')
 }
-
-const formatearFecha = (fecha: string) => {
-  return new Date(fecha).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })
-}
 </script>
 
 <template>
@@ -35,7 +87,10 @@ const formatearFecha = (fecha: string) => {
     </button>
   </div>
 
-  <div class="tabla-wrapper">
+  <p v-if="cargando">Cargando docentes...</p>
+  <p v-else-if="error">{{ error }}</p>
+
+  <div v-else class="tabla-wrapper">
     <table class="tabla">
       <thead>
         <tr>
@@ -43,12 +98,11 @@ const formatearFecha = (fecha: string) => {
           <th>Nombre</th>
           <th>Email</th>
           <th>Grado</th>
-          <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="docente in docentesMock" :key="docente.id">
+        <tr v-for="docente in docentes" :key="docente.id">
           <td>{{ docente.id }}</td>
           <td>
             <div class="tabla-nombre">
@@ -58,11 +112,6 @@ const formatearFecha = (fecha: string) => {
           </td>
           <td>{{ docente.email }}</td>
           <td>{{ docente.grado }}</td>
-          <td>
-            <span class="badge-estado" :class="docente.estado === 'Activo' ? 'badge-activo' : 'badge-inactivo'">
-              {{ docente.estado }}
-            </span>
-          </td>
           <td>
             <button class="btn-tabla" @click="verPerfil(docente)">
               <i class="ti ti-eye" aria-hidden="true"></i> Ver
@@ -81,9 +130,6 @@ const formatearFecha = (fecha: string) => {
           <div class="modal-avatar">{{ docenteSeleccionado?.nombre[0] }}{{ docenteSeleccionado?.apellido[0] }}</div>
           <div>
             <h2>{{ docenteSeleccionado?.nombre }} {{ docenteSeleccionado?.apellido }}</h2>
-            <span class="badge-estado" :class="docenteSeleccionado?.estado === 'Activo' ? 'badge-activo' : 'badge-inactivo'">
-              {{ docenteSeleccionado?.estado }}
-            </span>
           </div>
         </div>
         <button class="modal-close" @click="cerrarModal" aria-label="Cerrar">
@@ -95,7 +141,7 @@ const formatearFecha = (fecha: string) => {
         <div class="modal-grid">
           <div class="modal-row">
             <span class="modal-label"><i class="ti ti-id"></i> DNI</span>
-            <span class="modal-value">{{ docenteSeleccionado?.dni }}</span>
+            <span class="modal-value">{{ docenteSeleccionado?.dni ?? 'Sin DNI' }}</span>
           </div>
           <div class="modal-row">
             <span class="modal-label"><i class="ti ti-mail"></i> Email</span>
@@ -109,10 +155,6 @@ const formatearFecha = (fecha: string) => {
             <span class="modal-label"><i class="ti ti-school"></i> Grado</span>
             <span class="modal-value">{{ docenteSeleccionado?.grado }}</span>
           </div>
-          <div class="modal-row">
-            <span class="modal-label"><i class="ti ti-calendar"></i> Ingreso</span>
-            <span class="modal-value">{{ docenteSeleccionado ? formatearFecha(docenteSeleccionado.fechaIngreso) : '' }}</span>
-          </div>
         </div>
 
         <div class="modal-planificaciones">
@@ -123,9 +165,9 @@ const formatearFecha = (fecha: string) => {
               <span class="badge" :class="{
                 'badge-pendiente':  plan.estado === 'Pendiente',
                 'badge-aprobada':   plan.estado === 'Aprobada',
-                'badge-correccion': plan.estado === 'Correccion',
+                'badge-correccion': plan.estado === 'Corrección',
               }">
-                {{ plan.estado === 'Correccion' ? 'Corrección' : plan.estado }}
+                {{ plan.estado }}
               </span>
             </div>
           </div>
