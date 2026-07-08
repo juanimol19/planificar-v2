@@ -46,13 +46,14 @@ const formatearFecha = (fecha: string) =>
   new Date(fecha).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })
 
 const nombreDocente = computed(() => {
-  const p = plan.value?.persona_cargo_cursado?.persona
-  return p ? `${p.nombre} ${p.apellido}` : '—'
+  const p = plan.value?.persona_cargo_cursado?.persona_cargo?.persona
+  return p ? `${p.nombres} ${p.apellidos}` : '—'
 })
 
-const nombreCurso = computed(() =>
-  plan.value?.persona_cargo_cursado?.cursado?.curso?.nombre ?? '—'
-)
+const nombreCurso = computed(() => {
+  const curso = plan.value?.persona_cargo_cursado?.cursado?.curso
+  return curso ? `${curso.grado} ${curso.seccion} - ${curso.turno}` : '—'
+})
 
 onMounted(async () => {
   const id = Number(route.params.id)
@@ -198,7 +199,7 @@ const volver = () => router.push('/director/planificaciones')
 <p v-if="h.observaciones" class="historial-comentario">
   "{{ h.observaciones }}"
 </p>
-              </p>
+
             </div>
           </div>
         </div>

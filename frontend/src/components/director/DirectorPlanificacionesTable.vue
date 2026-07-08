@@ -37,19 +37,21 @@ const cambiarFiltro = (estado: string) => {
 const verDetalle = (id: number) => router.push(`/director/planificaciones/${id}`)
 
 const nombreDocente = (p: PlanificacionAnualAPI): string => {
-  const persona = p.persona_cargo_cursado?.persona
+  const persona = p.persona_cargo_cursado?.persona_cargo?.persona
   if (!persona) return '—'
-  return `${persona.nombre} ${persona.apellido}`
+  return `${persona.nombres} ${persona.apellidos}`
 }
 
 const nombreCurso = (p: PlanificacionAnualAPI): string => {
-  return p.persona_cargo_cursado?.cursado?.curso?.nombre ?? '—'
+  const curso = p.persona_cargo_cursado?.cursado?.curso
+  if (!curso) return '—'
+  return `${curso.grado} ${curso.seccion} - ${curso.turno}`
 }
 
 const inicialesDocente = (p: PlanificacionAnualAPI): string => {
-  const persona = p.persona_cargo_cursado?.persona
+  const persona = p.persona_cargo_cursado?.persona_cargo?.persona
   if (!persona) return '?'
-  return `${persona.nombre[0] ?? ''}${persona.apellido[0] ?? ''}`.toUpperCase()
+  return `${persona.nombres[0] ?? ''}${persona.apellidos[0] ?? ''}`.toUpperCase()
 }
 
 const formatearFecha = (fecha: string) =>
