@@ -1,8 +1,61 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { cursosMock } from '@/data/cursosMock'
+import { getCursosConDocente } from '@/services/cursoService'
+import { getPlanificaciones, estadoActual, labelEstado } from '@/services/planificacionService'
+import type { Curso, PlanificacionResumenCurso } from '@/types/Curso'
 
 const router = useRouter()
+
+const cursos = ref<Curso[]>([])
+const cargando = ref(true)
+const error = ref<string | null>(null)
+
+const armarDocente = (curso: any): string => {
+  const pcc = curso.cursados?.[0]?.persona_cargo_cursados?.[0]
+  const persona = pcc?.persona_cargo?.persona
+  if (!persona) return 'Sin asignar'
+  return `${persona.nombres} ${persona.apellidos}`
+}
+
+const cargarCursos = async () => {
+  cargando.value = true
+  error.value = null
+  try {
+    const [cursosData, planificacionesData] = await Promise.all([
+      getCursosConDocente(),
+      getPlanificaciones(),
+    ])
+
+    cursos.value = cursosData.map((curso) => {
+      const pccId = curso.cursados?.[0]?.persona_cargo_cursados?.[0]?.id
+
+      const planificaciones: PlanificacionResumenCurso[] = planificacionesData
+        .filter((p) => p.persona_cargo_cursado_id === pccId)
+        .map((p) => ({
+          id: p.id,
+          titulo: p.aprendizajes_esperados ?? 'Sin título',
+          estado: labelEstado(estadoActual(p.estados_anuales ?? [])),
+        }))
+
+      return {
+        id: curso.id,
+        nombre: `${curso.grado} ${curso.seccion}`,
+        ciclo: curso.ciclo,
+        turno: curso.turno,
+        docente: armarDocente(curso),
+        planificaciones,
+      }
+    })
+  } catch (e) {
+    error.value = 'No se pudo cargar la lista de cursos.'
+    console.error(e)
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(cargarCursos)
 
 const irAAgregar = () => router.push('/director/cursos/nuevo')
 const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
@@ -15,7 +68,10 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
     </button>
   </div>
 
-  <div class="tabla-wrapper">
+  <div v-if="cargando">Cargando cursos...</div>
+  <div v-else-if="error">{{ error }}</div>
+
+  <div v-else class="tabla-wrapper">
     <table class="tabla">
       <thead>
         <tr>
@@ -24,12 +80,11 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
           <th>Ciclo</th>
           <th>Turno</th>
           <th>Docente</th>
-          <th>Alumnos</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="curso in cursosMock" :key="curso.id">
+        <tr v-for="curso in cursos" :key="curso.id">
           <td>{{ curso.id }}</td>
           <td>
             <div class="tabla-nombre">
@@ -46,7 +101,6 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
             </span>
           </td>
           <td>{{ curso.docente }}</td>
-          <td>{{ curso.cantidadAlumnos }}</td>
           <td>
             <button class="btn-tabla" @click="verCurso(curso.id)">
               <i class="ti ti-eye" aria-hidden="true"></i> Ver

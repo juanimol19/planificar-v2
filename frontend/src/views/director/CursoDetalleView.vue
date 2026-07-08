@@ -1,13 +1,75 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { cursosMock } from '@/data/cursosMock'
+import { getCursosConDocente } from '@/services/cursoService'
+import { getPlanificaciones, estadoActual, labelEstado } from '@/services/planificacionService'
+import type { CursoAPI } from '@/services/cursoService'
 
 const route = useRoute()
 const router = useRouter()
 
 const cursoId = computed(() => Number(route.params.id))
-const curso = computed(() => cursosMock.find(c => c.id === cursoId.value))
+
+const cursoRaw = ref<CursoAPI | null>(null)
+const cargando = ref(true)
+const error = ref<string | null>(null)
+
+interface PlanificacionResumenDetalle {
+  id: number
+  titulo: string
+  estado: string
+}
+
+const planificaciones = ref<PlanificacionResumenDetalle[]>([])
+
+const armarDocente = (curso: CursoAPI): string => {
+  const pcc = curso.cursados?.[0]?.persona_cargo_cursados?.[0]
+  const persona = pcc?.persona_cargo?.persona
+  if (!persona) return 'Sin asignar'
+  return `${persona.nombres} ${persona.apellidos}`
+}
+
+const curso = computed(() => {
+  if (!cursoRaw.value) return null
+  return {
+    nombre: `${cursoRaw.value.grado} ${cursoRaw.value.seccion}`,
+    ciclo: cursoRaw.value.ciclo,
+    turno: cursoRaw.value.turno,
+    docente: armarDocente(cursoRaw.value),
+  }
+})
+
+const cargarDetalle = async () => {
+  cargando.value = true
+  error.value = null
+  try {
+    const [cursos, planificacionesData] = await Promise.all([
+      getCursosConDocente(),
+      getPlanificaciones(),
+    ])
+
+    const encontrado = cursos.find((c) => c.id === cursoId.value) ?? null
+    cursoRaw.value = encontrado
+
+    if (encontrado) {
+      const pccId = encontrado.cursados?.[0]?.persona_cargo_cursados?.[0]?.id
+      planificaciones.value = planificacionesData
+        .filter((p) => p.persona_cargo_cursado_id === pccId)
+        .map((p) => ({
+          id: p.id,
+          titulo: p.aprendizajes_esperados ?? 'Sin título',
+          estado: labelEstado(estadoActual(p.estados_anuales ?? [])),
+        }))
+    }
+  } catch (e) {
+    error.value = 'No se pudo cargar el curso.'
+    console.error(e)
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(cargarDetalle)
 
 const verPlanificacion = (planId: number) => {
   router.push(`/director/planificaciones/${planId}`)
@@ -22,7 +84,15 @@ const volver = () => router.push('/director/cursos')
       <i class="ti ti-arrow-left" aria-hidden="true"></i> Volver a Cursos
     </button>
 
-    <div v-if="!curso" class="no-encontrado">
+    <div v-if="cargando" class="estado-info">
+      Cargando curso...
+    </div>
+
+    <div v-else-if="error" class="estado-error">
+      {{ error }}
+    </div>
+
+    <div v-else-if="!curso" class="no-encontrado">
       <i class="ti ti-mood-confuzed" aria-hidden="true"></i>
       <p>No se encontró el curso solicitado.</p>
     </div>
@@ -47,13 +117,6 @@ const volver = () => router.push('/director/cursos')
           </div>
         </div>
         <div class="dato-card">
-          <i class="ti ti-users" aria-hidden="true"></i>
-          <div>
-            <span class="dato-label">Alumnos</span>
-            <span class="dato-valor">{{ curso.cantidadAlumnos }}</span>
-          </div>
-        </div>
-        <div class="dato-card">
           <i class="ti ti-sun" aria-hidden="true"></i>
           <div>
             <span class="dato-label">Turno</span>
@@ -65,9 +128,9 @@ const volver = () => router.push('/director/cursos')
       <div class="curso-planificaciones">
         <h2 class="seccion-titulo"><i class="ti ti-clipboard-list" aria-hidden="true"></i> Planificaciones de este curso</h2>
 
-        <div v-if="curso.planificaciones.length" class="plan-lista">
+        <div v-if="planificaciones.length" class="plan-lista">
           <button
-            v-for="plan in curso.planificaciones"
+            v-for="plan in planificaciones"
             :key="plan.id"
             class="plan-item"
             @click="verPlanificacion(plan.id)"

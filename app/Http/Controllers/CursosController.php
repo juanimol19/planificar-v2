@@ -53,4 +53,10 @@ class CursosController extends Controller
         $this->cursoService->delete($id);
         return response()->json(['mensaje' => 'Curso eliminado exitosamente']);
     }
+
+    public function conDocente(): JsonResponse
+    {
+        $cursos = $this->cursoService->getCursosConDocente();
+        return response()->json($cursos);
+    }
 }
