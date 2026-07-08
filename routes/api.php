@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
 
         Route::get('personas-docentes', [PersonasController::class, 'docentes']);
+        Route::get('cursos-con-docente', [CursosController::class, 'conDocente']);
 
         Route::apiResource('personas',              PersonasController::class);
         Route::apiResource('cargos',                CargosController::class);

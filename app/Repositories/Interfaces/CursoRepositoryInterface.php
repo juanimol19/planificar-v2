@@ -12,4 +12,5 @@ interface CursoRepositoryInterface
     public function create(array $data): Curso;
     public function update(int $id, array $data): Curso;
     public function delete(int $id): bool;
+    public function getCursosConDocente(): Collection;
 }

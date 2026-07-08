@@ -35,4 +35,18 @@ class CursoRepository implements CursoRepositoryInterface
         $curso = Curso::findOrFail($id);
         return $curso->delete();
     }
+
+    public function getCursosConDocente(): Collection
+    {
+        $anioActual = date('Y');
+
+        return Curso::whereHas('cursados', function ($query) use ($anioActual) {
+                $query->where('anio_lectivo', $anioActual);
+            })
+            ->with(['cursados' => function ($query) use ($anioActual) {
+                $query->where('anio_lectivo', $anioActual)
+                      ->with('personaCargoCursados.personaCargo.persona');
+            }])
+            ->get();
+    }
 }

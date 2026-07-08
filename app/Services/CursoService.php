@@ -36,4 +36,9 @@ class CursoService
     {
         return $this->cursoRepository->delete($id);
     }
+
+    public function getCursosConDocente(): Collection
+    {
+        return $this->cursoRepository->getCursosConDocente();
+    }
 }

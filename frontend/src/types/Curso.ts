@@ -1,15 +1,14 @@
 export interface PlanificacionResumenCurso {
   id: number
   titulo: string
-  estado: 'Pendiente' | 'Aprobada' | 'Correccion'
+  estado: string
 }
 
 export interface Curso {
   id: number
   nombre: string
   ciclo: string
-  turno: 'Mañana' | 'Tarde'
+  turno: string
   docente: string
-  cantidadAlumnos: number
   planificaciones: PlanificacionResumenCurso[]
 }
