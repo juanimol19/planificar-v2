@@ -19,6 +19,12 @@ class PersonasController extends Controller
         return response()->json($personas);
     }
 
+    public function docentes(): JsonResponse
+    {
+        $docentes = $this->personaService->getDocentes();
+        return response()->json($docentes);
+    }
+
     public function store(StorePersonaRequest $request): JsonResponse
     {
         $persona = $this->personaService->create($request->validated());
