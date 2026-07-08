@@ -10,8 +10,7 @@ class PlanificacionAnualRepository implements PlanificacionAnualRepositoryInterf
 {
 public function getAll(?int $personaCargoCursadoId = null): Collection
 {
-    $query = PlanificacionAnual::with(['area', 'personaCargoCursado', 'estadosAnuales']);
-
+    $query = PlanificacionAnual::with(['area', 'personaCargoCursado.personaCargo.persona', 'personaCargoCursado.cursado.curso', 'estadosAnuales']);
     if ($personaCargoCursadoId) {
         $query->where('persona_cargo_cursado_id', $personaCargoCursadoId);
     }
@@ -20,9 +19,9 @@ public function getAll(?int $personaCargoCursadoId = null): Collection
 }
 
     public function findById(int $id): ?PlanificacionAnual
-    {
-        return PlanificacionAnual::with(['area', 'personaCargoCursado', 'estadosAnuales'])->find($id);
-    }
+{
+    return PlanificacionAnual::with(['area', 'personaCargoCursado.personaCargo.persona', 'personaCargoCursado.cursado.curso', 'estadosAnuales'])->find($id);
+}
 
     public function create(array $data): PlanificacionAnual
     {
