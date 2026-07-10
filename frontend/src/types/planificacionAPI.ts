@@ -63,10 +63,12 @@ export interface PlanificacionAnualAPI {
   area?: { id: number; nombre: string }
   persona_cargo_cursado?: {
     id: number
-    persona?: { id: number; nombre: string; apellido: string }
+    persona_cargo?: {
+      persona?: { id: number; nombres: string; apellidos: string }
+    }
     cursado?: {
       id: number
-      curso?: { id: number; nombre: string }
+      curso?: { id: number; grado: string; seccion: string; turno: string }
     }
   }
   estados_anuales?: EstadoAnualAPI[]
