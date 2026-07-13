@@ -49,4 +49,14 @@ class CursoRepository implements CursoRepositoryInterface
             }])
             ->get();
     }
+
+    public function getCursosSinAsignar(): Collection
+    {
+        $anioActual = date('Y');
+
+        return Curso::whereDoesntHave('cursados', function ($query) use ($anioActual) {
+                $query->where('anio_lectivo', $anioActual);
+            })
+            ->get();
+    }
 }

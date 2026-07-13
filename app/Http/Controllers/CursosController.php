@@ -59,4 +59,10 @@ class CursosController extends Controller
         $cursos = $this->cursoService->getCursosConDocente();
         return response()->json($cursos);
     }
+
+    public function sinAsignar(): JsonResponse
+    {
+        $cursos = $this->cursoService->getCursosSinAsignar();
+        return response()->json($cursos);
+    }
 }

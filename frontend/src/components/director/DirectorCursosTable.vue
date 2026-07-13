@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCursosConDocente } from '@/services/cursoService'
+import { getCursosConDocente, getCursosSinAsignar, eliminarCurso } from '@/services/cursoService'
 import { getPlanificaciones, estadoActual, labelEstado } from '@/services/planificacionService'
 import type { Curso, PlanificacionResumenCurso } from '@/types/Curso'
+import type { CursoSinAsignarAPI } from '@/services/cursoService'
 
 const router = useRouter()
 
 const cursos = ref<Curso[]>([])
+const cursosSinAsignar = ref<CursoSinAsignarAPI[]>([])
 const cargando = ref(true)
 const error = ref<string | null>(null)
+const eliminandoId = ref<number | null>(null)
 
 const armarDocente = (curso: any): string => {
   const pcc = curso.cursados?.[0]?.persona_cargo_cursados?.[0]
@@ -18,13 +21,20 @@ const armarDocente = (curso: any): string => {
   return `${persona.nombres} ${persona.apellidos}`
 }
 
+const claseBadgeTurno = (turno: string): string => {
+  if (turno === 'Mañana') return 'badge-manana'
+  if (turno === 'Tarde') return 'badge-tarde'
+  return 'badge-noche'
+}
+
 const cargarCursos = async () => {
   cargando.value = true
   error.value = null
   try {
-    const [cursosData, planificacionesData] = await Promise.all([
+    const [cursosData, planificacionesData, sinAsignarData] = await Promise.all([
       getCursosConDocente(),
       getPlanificaciones(),
+      getCursosSinAsignar(),
     ])
 
     cursos.value = cursosData.map((curso) => {
@@ -47,6 +57,8 @@ const cargarCursos = async () => {
         planificaciones,
       }
     })
+
+    cursosSinAsignar.value = sinAsignarData
   } catch (e) {
     error.value = 'No se pudo cargar la lista de cursos.'
     console.error(e)
@@ -59,6 +71,24 @@ onMounted(cargarCursos)
 
 const irAAgregar = () => router.push('/director/cursos/nuevo')
 const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
+
+const eliminarCursoSinAsignar = async (curso: CursoSinAsignarAPI) => {
+  const confirmado = confirm(
+    `¿Eliminar el curso ${curso.grado} ${curso.seccion} (${curso.turno})? Esta acción no se puede deshacer.`
+  )
+  if (!confirmado) return
+
+  eliminandoId.value = curso.id
+  try {
+    await eliminarCurso(curso.id)
+    cursosSinAsignar.value = cursosSinAsignar.value.filter((c) => c.id !== curso.id)
+  } catch (e) {
+    alert('No se pudo eliminar el curso. Intentá nuevamente.')
+    console.error(e)
+  } finally {
+    eliminandoId.value = null
+  }
+}
 </script>
 
 <template>
@@ -71,45 +101,96 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
   <div v-if="cargando">Cargando cursos...</div>
   <div v-else-if="error">{{ error }}</div>
 
-  <div v-else class="tabla-wrapper">
-    <table class="tabla">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Curso</th>
-          <th>Ciclo</th>
-          <th>Turno</th>
-          <th>Docente</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="curso in cursos" :key="curso.id">
-          <td>{{ curso.id }}</td>
-          <td>
-            <div class="tabla-nombre">
-              <div class="tabla-icon">
-                <i class="ti ti-books" aria-hidden="true"></i>
+  <template v-else>
+    <div class="tabla-wrapper">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Curso</th>
+            <th>Ciclo</th>
+            <th>Turno</th>
+            <th>Docente</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="curso in cursos" :key="curso.id">
+            <td>{{ curso.id }}</td>
+            <td>
+              <div class="tabla-nombre">
+                <div class="tabla-icon">
+                  <i class="ti ti-books" aria-hidden="true"></i>
+                </div>
+                {{ curso.nombre }}
               </div>
-              {{ curso.nombre }}
-            </div>
-          </td>
-          <td>{{ curso.ciclo }}</td>
-          <td>
-            <span class="badge-turno" :class="curso.turno === 'Mañana' ? 'badge-manana' : 'badge-tarde'">
-              {{ curso.turno }}
-            </span>
-          </td>
-          <td>{{ curso.docente }}</td>
-          <td>
-            <button class="btn-tabla" @click="verCurso(curso.id)">
-              <i class="ti ti-eye" aria-hidden="true"></i> Ver
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            </td>
+            <td>{{ curso.ciclo }}</td>
+            <td>
+              <span class="badge-turno" :class="claseBadgeTurno(curso.turno)">
+                {{ curso.turno }}
+              </span>
+            </td>
+            <td>{{ curso.docente }}</td>
+            <td>
+              <button class="btn-tabla" @click="verCurso(curso.id)">
+                <i class="ti ti-eye" aria-hidden="true"></i> Ver
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-if="cursosSinAsignar.length" class="tabla-wrapper tabla-sin-asignar">
+      <h2 class="subtitulo-seccion">Cursos sin asignar</h2>
+      <p class="paso-desc">Estos cursos fueron creados pero todavía no tienen docente ni año lectivo asociado.</p>
+
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Curso</th>
+            <th>Ciclo</th>
+            <th>Turno</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="curso in cursosSinAsignar" :key="curso.id">
+            <td>{{ curso.id }}</td>
+            <td>
+              <div class="tabla-nombre">
+                <div class="tabla-icon">
+                  <i class="ti ti-books" aria-hidden="true"></i>
+                </div>
+                {{ curso.grado }} {{ curso.seccion }}
+              </div>
+            </td>
+            <td>{{ curso.ciclo }}</td>
+            <td>
+              <span class="badge-turno" :class="claseBadgeTurno(curso.turno)">
+                {{ curso.turno }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-tabla" @click="verCurso(curso.id)">
+                <i class="ti ti-eye" aria-hidden="true"></i> Ver
+              </button>
+              <button
+                class="btn-tabla btn-eliminar"
+                :disabled="eliminandoId === curso.id"
+                @click="eliminarCursoSinAsignar(curso)"
+              >
+                <i class="ti ti-trash" aria-hidden="true"></i>
+                {{ eliminandoId === curso.id ? 'Eliminando...' : 'Eliminar' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </template>
 </template>
 
 <style scoped>
@@ -153,6 +234,32 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
 
 .dark-mode .tabla-wrapper {
   border-color: #1e3a8a;
+}
+
+.tabla-sin-asignar {
+  margin-top: 2rem;
+}
+
+.subtitulo-seccion {
+  padding: 16px 20px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2a3a;
+}
+
+.dark-mode .subtitulo-seccion {
+  color: #e2e8f0;
+}
+
+.tabla-sin-asignar .paso-desc {
+  padding: 4px 20px 16px;
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.dark-mode .tabla-sin-asignar .paso-desc {
+  color: #94a3b8;
 }
 
 .tabla {
@@ -258,6 +365,12 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
   border: 1px solid rgba(124, 58, 237, 0.25);
 }
 
+.badge-noche {
+  background: rgba(15, 23, 42, 0.08);
+  color: #1e293b;
+  border: 1px solid rgba(15, 23, 42, 0.25);
+}
+
 .dark-mode .badge-manana {
   background: rgba(37, 99, 235, 0.2);
   color: #60a5fa;
@@ -268,6 +381,18 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
   background: rgba(124, 58, 237, 0.2);
   color: #a78bfa;
   border-color: #7c3aed;
+}
+
+.dark-mode .badge-noche {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border-color: #64748b;
+}
+
+.tabla tbody td:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .btn-tabla {
@@ -294,5 +419,29 @@ const verCurso = (id: number) => router.push(`/director/cursos/${id}`)
 .btn-tabla:active {
   transform: translateY(0);
   box-shadow: none;
+}
+
+.btn-eliminar {
+  background: #dc2626;
+  border-color: #991b1b;
+}
+
+.btn-eliminar:hover {
+  background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+.btn-eliminar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.tabla tbody td:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

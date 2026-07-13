@@ -37,3 +37,44 @@ export async function getCursosConDocente(): Promise<CursoAPI[]> {
   const { data } = await apiClient.get<CursoAPI[]>('/cursos-con-docente')
   return data
 }
+
+export interface CrearCursoPayload {
+  ciclo: string
+  grado: string
+  seccion: string
+  turno: string
+}
+
+export interface CrearCursoResponse {
+  mensaje: string
+  curso: {
+    id: number
+    ciclo: string
+    grado: string
+    seccion: string
+    turno: string
+  }
+}
+
+export async function crearCurso(payload: CrearCursoPayload): Promise<CrearCursoResponse> {
+  const { data } = await apiClient.post<CrearCursoResponse>('/cursos', payload)
+  return data
+}
+
+export interface CursoSinAsignarAPI {
+  id: number
+  ciclo: string
+  grado: string
+  seccion: string
+  turno: string
+}
+
+export async function getCursosSinAsignar(): Promise<CursoSinAsignarAPI[]> {
+  const { data } = await apiClient.get<CursoSinAsignarAPI[]>('/cursos-sin-asignar')
+  return data
+}
+
+export async function eliminarCurso(id: number): Promise<{ mensaje: string }> {
+  const { data } = await apiClient.delete<{ mensaje: string }>(`/cursos/${id}`)
+  return data
+}
