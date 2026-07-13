@@ -1,48 +1,64 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { agregarCurso } from '@/data/cursosMock'
-import { docentesMock } from '@/data/docentesMock'
+import { crearCurso } from '@/services/cursoService'
 
 const router = useRouter()
 
 const form = reactive({
-  nombre: '',
-  ciclo: 'Primario',
-  turno: 'Mañana' as 'Mañana' | 'Tarde',
-  docente: '',
-  cantidadAlumnos: null as number | null,
+  ciclo: 'Primer Ciclo' as 'Primer Ciclo' | 'Segundo Ciclo',
+  grado: '',
+  seccion: '',
+  turno: 'Mañana' as 'Mañana' | 'Tarde' | 'Noche',
 })
 
 const errores = ref<Record<string, string>>({})
 const enviado = ref(false)
+const enviando = ref(false)
+const errorServidor = ref('')
+
+const gradosPorCiclo: Record<string, string[]> = {
+  'Primer Ciclo': ['1°', '2°', '3°'],
+  'Segundo Ciclo': ['4°', '5°', '6°', '7°'],
+}
+
+const opcionesGrado = computed(() => gradosPorCiclo[form.ciclo] ?? [])
+const opcionesSeccion = ['A', 'B', 'C', 'D', 'E', 'F']
+
+watch(() => form.ciclo, () => {
+  form.grado = ''
+})
 
 const validar = (): boolean => {
   errores.value = {}
 
-  if (!form.nombre.trim()) errores.value.nombre = 'El nombre del curso es obligatorio.'
-  if (!form.docente)       errores.value.docente = 'Seleccioná un docente a cargo.'
-
-  if (form.cantidadAlumnos === null || form.cantidadAlumnos <= 0) {
-    errores.value.cantidadAlumnos = 'Ingresá una cantidad válida de alumnos.'
-  }
+  if (!form.grado)   errores.value.grado = 'Seleccioná un grado.'
+  if (!form.seccion) errores.value.seccion = 'Seleccioná una sección.'
 
   return Object.keys(errores.value).length === 0
 }
 
-const guardar = () => {
+const guardar = async () => {
+  errorServidor.value = ''
   if (!validar()) return
 
-  agregarCurso({
-    nombre: form.nombre,
-    ciclo: form.ciclo,
-    turno: form.turno,
-    docente: form.docente,
-    cantidadAlumnos: form.cantidadAlumnos as number,
-  })
+  enviando.value = true
+  try {
+    await crearCurso({
+      ciclo: form.ciclo,
+      grado: form.grado,
+      seccion: form.seccion,
+      turno: form.turno,
+    })
 
-  enviado.value = true
-  setTimeout(() => router.push('/director/cursos'), 1200)
+    enviado.value = true
+    setTimeout(() => router.push('/director/cursos'), 1200)
+  } catch (error) {
+    errorServidor.value = 'No se pudo crear el curso. Intentá nuevamente.'
+    console.error(error)
+  } finally {
+    enviando.value = false
+  }
 }
 
 const cancelar = () => router.push('/director/cursos')
@@ -66,49 +82,50 @@ const cancelar = () => router.push('/director/cursos')
       <form v-else @submit.prevent="guardar">
         <div class="form-fila">
           <div class="form-group">
-            <label for="nombre">Nombre del curso</label>
-            <input id="nombre" v-model="form.nombre" type="text" placeholder="Ej: 2° B" />
-            <span v-if="errores.nombre" class="error-msg">{{ errores.nombre }}</span>
-          </div>
-          <div class="form-group">
             <label for="ciclo">Ciclo</label>
             <select id="ciclo" v-model="form.ciclo">
-              <option value="Primario">Primario</option>
-              <option value="Inicial">Inicial</option>
-              <option value="Secundario">Secundario</option>
+              <option value="Primer Ciclo">Primer Ciclo</option>
+              <option value="Segundo Ciclo">Segundo Ciclo</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label for="grado">Grado</label>
+            <select id="grado" v-model="form.grado">
+              <option value="" disabled>Seleccioná un grado</option>
+              <option v-for="g in opcionesGrado" :key="g" :value="g">{{ g }}</option>
+            </select>
+            <span v-if="errores.grado" class="error-msg">{{ errores.grado }}</span>
           </div>
         </div>
 
         <div class="form-fila">
           <div class="form-group">
+            <label for="seccion">Sección</label>
+            <select id="seccion" v-model="form.seccion">
+              <option value="" disabled>Seleccioná una sección</option>
+              <option v-for="s in opcionesSeccion" :key="s" :value="s">{{ s }}</option>
+            </select>
+            <span v-if="errores.seccion" class="error-msg">{{ errores.seccion }}</span>
+          </div>
+          <div class="form-group">
             <label for="turno">Turno</label>
             <select id="turno" v-model="form.turno">
               <option value="Mañana">Mañana</option>
               <option value="Tarde">Tarde</option>
+              <option value="Noche">Noche</option>
             </select>
           </div>
-          <div class="form-group">
-            <label for="alumnos">Cantidad de alumnos</label>
-            <input id="alumnos" v-model.number="form.cantidadAlumnos" type="number" min="1" placeholder="Ej: 25" />
-            <span v-if="errores.cantidadAlumnos" class="error-msg">{{ errores.cantidadAlumnos }}</span>
-          </div>
         </div>
 
-        <div class="form-group">
-          <label for="docente">Docente a cargo</label>
-          <select id="docente" v-model="form.docente">
-            <option value="" disabled>Seleccioná un docente</option>
-            <option v-for="d in docentesMock" :key="d.id" :value="`${d.nombre} ${d.apellido}`">
-              {{ d.nombre }} {{ d.apellido }}
-            </option>
-          </select>
-          <span v-if="errores.docente" class="error-msg">{{ errores.docente }}</span>
-        </div>
+        <div v-if="errorServidor" class="error-msg">{{ errorServidor }}</div>
 
         <div class="form-nav">
-          <button type="button" class="btn-nav btn-anterior" @click="cancelar">Cancelar</button>
-          <button type="submit" class="btn-nav btn-submit">Guardar curso</button>
+          <button type="button" class="btn-nav btn-anterior" @click="cancelar" :disabled="enviando">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-nav btn-submit" :disabled="enviando">
+            {{ enviando ? 'Guardando...' : 'Guardar curso' }}
+          </button>
         </div>
       </form>
     </div>
