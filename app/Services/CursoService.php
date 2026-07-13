@@ -41,4 +41,9 @@ class CursoService
     {
         return $this->cursoRepository->getCursosConDocente();
     }
+
+    public function getCursosSinAsignar(): Collection
+    {
+        return $this->cursoRepository->getCursosSinAsignar();
+    }
 }

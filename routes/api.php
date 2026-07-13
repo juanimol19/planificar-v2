@@ -39,7 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('personas-docentes', [PersonasController::class, 'docentes']);
         Route::get('cursos-con-docente', [CursosController::class, 'conDocente']);
-
+        Route::get('cursos-sin-asignar', [CursosController::class, 'sinAsignar']);
+        
         Route::apiResource('personas',              PersonasController::class);
         Route::apiResource('cargos',                CargosController::class);
         Route::apiResource('sit-revista',           SitRevistaController::class);
