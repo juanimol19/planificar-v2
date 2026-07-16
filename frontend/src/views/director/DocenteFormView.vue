@@ -1,28 +1,82 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { registrarUsuario } from '@/services/directorService'
+import { crearDocente, type CrearDocentePayload } from '@/services/docenteService'
+import { getCargos, type CargoAPI } from '@/services/cargoService'
+import { getSitRevistas, type SitRevistaAPI } from '@/services/sitRevistaService'
+import { getCursosSinAsignar, type CursoSinAsignarAPI } from '@/services/cursoService'
 
 const router = useRouter()
 
 const form = reactive({
+  // Datos de acceso
   name: '',
   email: '',
   password: '',
   password_confirmation: '',
-  role: 'docente' as 'docente' | 'vicedirector' | 'secretario',
+
+  // Datos personales
+  apellidos: '',
+  nombres: '',
+  dni: '',
+  telefono: '',
+  direccion: '',
+  fecha_nacimiento: '',
+
+  // Cargo y situación de revista
+  cargos_id: null as number | null,
+  sit_revista_id: null as number | null,
+
+  // Asignación de curso
+  cursos_id: null as number | null,
+  anio_lectivo: '',
+  fecha_inicio: '',
+  fecha_fin: '',
 })
+
+const cargos = ref<CargoAPI[]>([])
+const sitRevistas = ref<SitRevistaAPI[]>([])
+const cursosSinAsignar = ref<CursoSinAsignarAPI[]>([])
+
+const cargandoOpciones = ref(true)
+const errorOpciones = ref('')
 
 const errores = ref<Record<string, string>>({})
 const enviado = ref(false)
 const cargando = ref(false)
 const errorServidor = ref('')
 
+const cargarOpciones = async () => {
+  cargandoOpciones.value = true
+  errorOpciones.value = ''
+  try {
+    const [cargosData, sitRevistasData, cursosData] = await Promise.all([
+      getCargos(),
+      getSitRevistas(),
+      getCursosSinAsignar(),
+    ])
+    cargos.value = cargosData
+    sitRevistas.value = sitRevistasData
+    cursosSinAsignar.value = cursosData
+  } catch {
+    errorOpciones.value = 'No se pudieron cargar las opciones del formulario. Reintentá recargando la página.'
+  } finally {
+    cargandoOpciones.value = false
+  }
+}
+
+onMounted(cargarOpciones)
+
+const cursoSeleccionadoLabel = computed(() => {
+  const curso = cursosSinAsignar.value.find(c => c.id === form.cursos_id)
+  if (!curso) return ''
+  return `${curso.grado} ${curso.seccion} - ${curso.turno}`
+})
+
 const validar = (): boolean => {
   errores.value = {}
 
-  if (!form.name.trim())
-    errores.value.name = 'El nombre es obligatorio.'
+  if (!form.name.trim()) errores.value.name = 'El nombre es obligatorio.'
 
   if (!form.email.trim()) {
     errores.value.email = 'El email es obligatorio.'
@@ -42,6 +96,23 @@ const validar = (): boolean => {
     errores.value.password_confirmation = 'Las contraseñas no coinciden.'
   }
 
+  if (!form.apellidos.trim()) errores.value.apellidos = 'Los apellidos son obligatorios.'
+  if (!form.nombres.trim()) errores.value.nombres = 'Los nombres son obligatorios.'
+  if (!form.telefono.trim()) errores.value.telefono = 'El teléfono es obligatorio.'
+  if (!form.direccion.trim()) errores.value.direccion = 'La dirección es obligatoria.'
+
+  if (!form.cargos_id) errores.value.cargos_id = 'Seleccioná un cargo.'
+  if (!form.sit_revista_id) errores.value.sit_revista_id = 'Seleccioná una situación de revista.'
+
+  if (!form.cursos_id) errores.value.cursos_id = 'Seleccioná un curso.'
+  if (!form.anio_lectivo.trim()) errores.value.anio_lectivo = 'El año lectivo es obligatorio.'
+  if (!form.fecha_inicio) errores.value.fecha_inicio = 'La fecha de inicio es obligatoria.'
+  if (!form.fecha_fin) {
+    errores.value.fecha_fin = 'La fecha de fin es obligatoria.'
+  } else if (form.fecha_inicio && form.fecha_fin < form.fecha_inicio) {
+    errores.value.fecha_fin = 'La fecha de fin no puede ser anterior a la de inicio.'
+  }
+
   return Object.keys(errores.value).length === 0
 }
 
@@ -52,18 +123,36 @@ const guardar = async () => {
   errorServidor.value = ''
 
   try {
-    await registrarUsuario({ ...form })
+    const payload: CrearDocentePayload = {
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      password_confirmation: form.password_confirmation,
+      apellidos: form.apellidos,
+      nombres: form.nombres,
+      dni: form.dni.trim() || null,
+      telefono: form.telefono,
+      direccion: form.direccion,
+      fecha_nacimiento: form.fecha_nacimiento || null,
+      cargos_id: form.cargos_id!,
+      sit_revista_id: form.sit_revista_id!,
+      cursos_id: form.cursos_id!,
+      anio_lectivo: form.anio_lectivo,
+      fecha_inicio: form.fecha_inicio,
+      fecha_fin: form.fecha_fin,
+    }
+
+    await crearDocente(payload)
     enviado.value = true
     setTimeout(() => router.push('/director/docentes'), 1200)
   } catch (error: any) {
     const data = error.response?.data
     if (data?.errors) {
-      // Errores de validación del backend
       for (const [campo, mensajes] of Object.entries(data.errors)) {
         errores.value[campo] = (mensajes as string[])[0]
       }
     } else {
-      errorServidor.value = data?.message ?? 'Ocurrió un error al registrar el usuario.'
+      errorServidor.value = data?.message ?? data?.mensaje ?? 'Ocurrió un error al registrar el docente.'
     }
   } finally {
     cargando.value = false
@@ -82,12 +171,12 @@ const cancelar = () => {
     </button>
 
     <div class="form-container">
-      <h1 class="paso-titulo">Agregar nuevo usuario</h1>
-      <p class="paso-desc">Registrá las credenciales de acceso del nuevo usuario al sistema.</p>
+      <h1 class="paso-titulo">Agregar nuevo docente</h1>
+      <p class="paso-desc">Registrá los datos del docente, su cargo y el curso que va a dictar.</p>
 
       <div v-if="enviado" class="exito-box">
         <i class="ti ti-circle-check" aria-hidden="true"></i>
-        Usuario registrado correctamente. Redirigiendo...
+        Docente registrado correctamente. Redirigiendo...
       </div>
 
       <div v-if="errorServidor" class="error-box">
@@ -95,7 +184,20 @@ const cancelar = () => {
         {{ errorServidor }}
       </div>
 
-      <form v-if="!enviado" @submit.prevent="guardar">
+      <div v-if="errorOpciones" class="error-box">
+        <i class="ti ti-alert-circle" aria-hidden="true"></i>
+        {{ errorOpciones }}
+      </div>
+
+      <div v-if="cargandoOpciones && !errorOpciones" class="cargando-box">
+        <i class="ti ti-loader-2" aria-hidden="true"></i> Cargando opciones...
+      </div>
+
+      <form v-if="!enviado && !cargandoOpciones && !errorOpciones" @submit.prevent="guardar">
+
+        <!-- Datos de acceso -->
+        <h2 class="subtitulo-seccion">Datos de acceso</h2>
+
         <div class="form-group">
           <label for="name">Nombre completo</label>
           <input id="name" v-model="form.name" type="text" placeholder="Ej: Juan Pérez" />
@@ -121,13 +223,108 @@ const cancelar = () => {
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="role">Rol</label>
-          <select id="role" v-model="form.role">
-            <option value="docente">Docente</option>
-            <option value="vicedirector">Vicedirector</option>
-            <option value="secretario">Secretario</option>
+        <!-- Datos personales -->
+        <h2 class="subtitulo-seccion">Datos personales</h2>
+
+        <div class="form-fila">
+          <div class="form-group">
+            <label for="apellidos">Apellidos</label>
+            <input id="apellidos" v-model="form.apellidos" type="text" placeholder="Ej: Pérez" />
+            <span v-if="errores.apellidos" class="error-msg">{{ errores.apellidos }}</span>
+          </div>
+          <div class="form-group">
+            <label for="nombres">Nombres</label>
+            <input id="nombres" v-model="form.nombres" type="text" placeholder="Ej: Juan" />
+            <span v-if="errores.nombres" class="error-msg">{{ errores.nombres }}</span>
+          </div>
+        </div>
+
+        <div class="form-fila">
+          <div class="form-group">
+            <label for="dni">DNI (opcional)</label>
+            <input id="dni" v-model="form.dni" type="text" placeholder="Ej: 30123456" />
+            <span v-if="errores.dni" class="error-msg">{{ errores.dni }}</span>
+          </div>
+          <div class="form-group">
+            <label for="telefono">Teléfono</label>
+            <input id="telefono" v-model="form.telefono" type="text" placeholder="Ej: 3624123456" />
+            <span v-if="errores.telefono" class="error-msg">{{ errores.telefono }}</span>
+          </div>
+        </div>
+
+        <div class="form-fila">
+          <div class="form-group">
+            <label for="direccion">Dirección</label>
+            <input id="direccion" v-model="form.direccion" type="text" placeholder="Ej: Av. Siempre Viva 123" />
+            <span v-if="errores.direccion" class="error-msg">{{ errores.direccion }}</span>
+          </div>
+          <div class="form-group">
+            <label for="fecha_nacimiento">Fecha de nacimiento (opcional)</label>
+            <input id="fecha_nacimiento" v-model="form.fecha_nacimiento" type="date" />
+            <span v-if="errores.fecha_nacimiento" class="error-msg">{{ errores.fecha_nacimiento }}</span>
+          </div>
+        </div>
+
+        <!-- Cargo y situación de revista -->
+        <h2 class="subtitulo-seccion">Cargo y situación de revista</h2>
+
+        <div class="form-fila">
+          <div class="form-group">
+            <label for="cargos_id">Cargo</label>
+            <select id="cargos_id" v-model="form.cargos_id">
+              <option :value="null" disabled>Seleccioná un cargo</option>
+              <option v-for="c in cargos" :key="c.id" :value="c.id">{{ c.cargo }}</option>
+            </select>
+            <span v-if="errores.cargos_id" class="error-msg">{{ errores.cargos_id }}</span>
+          </div>
+          <div class="form-group">
+            <label for="sit_revista_id">Situación de revista</label>
+            <select id="sit_revista_id" v-model="form.sit_revista_id">
+              <option :value="null" disabled>Seleccioná una situación</option>
+              <option v-for="s in sitRevistas" :key="s.id" :value="s.id">{{ s.revista }}</option>
+            </select>
+            <span v-if="errores.sit_revista_id" class="error-msg">{{ errores.sit_revista_id }}</span>
+          </div>
+        </div>
+
+        <!-- Asignación de curso -->
+        <h2 class="subtitulo-seccion">Asignación de curso</h2>
+
+        <div class="form-group" v-if="cursosSinAsignar.length === 0">
+          <div class="error-box">
+            <i class="ti ti-alert-circle" aria-hidden="true"></i>
+            No hay cursos sin asignar disponibles. Creá un curso primero.
+          </div>
+        </div>
+
+        <div class="form-group" v-else>
+          <label for="cursos_id">Curso</label>
+          <select id="cursos_id" v-model="form.cursos_id">
+            <option :value="null" disabled>Seleccioná un curso</option>
+            <option v-for="c in cursosSinAsignar" :key="c.id" :value="c.id">
+              {{ c.grado }} {{ c.seccion }} - {{ c.turno }}
+            </option>
           </select>
+          <span v-if="errores.cursos_id" class="error-msg">{{ errores.cursos_id }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="anio_lectivo">Año lectivo</label>
+          <input id="anio_lectivo" v-model="form.anio_lectivo" type="text" placeholder="Ej: 2026" />
+          <span v-if="errores.anio_lectivo" class="error-msg">{{ errores.anio_lectivo }}</span>
+        </div>
+
+        <div class="form-fila">
+          <div class="form-group">
+            <label for="fecha_inicio">Fecha de inicio</label>
+            <input id="fecha_inicio" v-model="form.fecha_inicio" type="date" />
+            <span v-if="errores.fecha_inicio" class="error-msg">{{ errores.fecha_inicio }}</span>
+          </div>
+          <div class="form-group">
+            <label for="fecha_fin">Fecha de fin</label>
+            <input id="fecha_fin" v-model="form.fecha_fin" type="date" />
+            <span v-if="errores.fecha_fin" class="error-msg">{{ errores.fecha_fin }}</span>
+          </div>
         </div>
 
         <div class="form-nav">
@@ -136,7 +333,7 @@ const cancelar = () => {
           </button>
           <button type="submit" class="btn-nav btn-submit" :disabled="cargando">
             <i v-if="cargando" class="ti ti-loader-2" aria-hidden="true"></i>
-            {{ cargando ? 'Registrando...' : 'Registrar usuario' }}
+            {{ cargando ? 'Registrando...' : 'Registrar docente' }}
           </button>
         </div>
       </form>
