@@ -65,3 +65,50 @@ export const getDocentes = async (): Promise<DocenteAPI[]> => {
   const { data } = await apiClient.get('/personas-docentes')
   return data
 }
+
+// ─── Alta de docente (creación en cascada) ─────────────────────────────────────
+
+export interface CrearDocentePayload {
+  // Usuario
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+
+  // Persona
+  apellidos: string
+  nombres: string
+  dni?: string | null
+  telefono: string
+  direccion: string
+  fecha_nacimiento?: string | null
+
+  // Persona-Cargo
+  cargos_id: number
+  sit_revista_id: number
+
+  // Cursado (curso ya elegido + año lectivo nuevo)
+  cursos_id: number
+  anio_lectivo: string
+  fecha_inicio: string
+  fecha_fin: string
+}
+
+export interface CrearDocenteResponse {
+  mensaje: string
+  docente: {
+    user: UserAPI
+    persona: DocenteAPI
+    persona_cargo: PersonaCargoAPI
+    cursado: CursadoAPI
+    persona_cargo_cursado: PersonaCargoCursadoAPI
+  }
+}
+
+/**
+ * Crea un docente completo: User + Persona + PersonaCargo + Cursado + PersonaCargoCursado.
+ */
+export const crearDocente = async (payload: CrearDocentePayload): Promise<CrearDocenteResponse> => {
+  const { data } = await apiClient.post('/docentes', payload)
+  return data
+}

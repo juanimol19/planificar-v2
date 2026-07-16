@@ -15,6 +15,7 @@ use App\Http\Controllers\EstadosAnualController;
 use App\Http\Controllers\EstadosDiariaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\DocenteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Solo Director ──────────────────────────────────────────────
     Route::middleware('role:director|vicedirector|secretario')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
+        Route::post('docentes', [DocenteController::class, 'store']);
 
         Route::get('personas-docentes', [PersonasController::class, 'docentes']);
         Route::get('cursos-con-docente', [CursosController::class, 'conDocente']);
