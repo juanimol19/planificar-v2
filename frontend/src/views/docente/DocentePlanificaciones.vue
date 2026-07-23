@@ -115,15 +115,16 @@ async function handleSubmit(datos: DatosAnual | DatosDiaria) {
     try {
       const planCreada = await crearPlanificacion({
         fecha_presentacion:     d.fecha_presentacion,
-        aprendizajes_esperados: d.materias.map(m =>
-          m.periodos.map(p => p.aprendizajes_esperados).join(' | ')
-        ).join(' // '),
-        saberes: d.materias.map(m =>
-          m.periodos.map(p => p.saberes).join(' | ')
-        ).join(' // '),
-        criterios:    d.materias.map(m => m.criterios_evaluacion).join(' // '),
-        bibliografia: d.bibliografia,
-        diagnostico:  d.diagnostico,
+        aprendizajes_esperados: '',
+        saberes:                '',
+        criterios:              '',
+        bibliografia:           d.bibliografia,
+        diagnostico:            d.diagnostico,
+        contenido:              d,
+        grado:                  d.grado,
+        ciclo:                  d.ciclo,
+        anio:                   d.anio,
+        saberes_transversales:  d.saberes_transversales,
         areas_id:     1,
         persona_cargo_cursado_id: authStore.personaCargoCursadoId ?? 0,
         tipo_planificacion: 'Anual',

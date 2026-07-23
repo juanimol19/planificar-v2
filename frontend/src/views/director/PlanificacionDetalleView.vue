@@ -10,6 +10,7 @@ import {
   estadoFrontABack,
 } from '@/services/planificacionService'
 import type { PlanificacionAnualAPI, EstadoAnualAPI } from '@/types/planificacionAPI'
+import PlanificacionAnualPreview from '@/components/docente/PlanificacionAnualPreview.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -82,9 +83,9 @@ const confirmarCambioEstado = async () => {
       fecha: new Date().toISOString().slice(0, 10),
       planificacion_anual_id: plan.value.id,
     }
-if (nuevoComentario.value.trim()) {
-  payload.observaciones = nuevoComentario.value.trim()
-}
+    if (nuevoComentario.value.trim()) {
+      payload.observaciones = nuevoComentario.value.trim()
+    }
     const nuevoEstadoObj = await crearEstado(payload)
     if (!plan.value.estados_anuales) plan.value.estados_anuales = []
     plan.value.estados_anuales.push(nuevoEstadoObj)
@@ -130,8 +131,15 @@ const volver = () => router.push('/director/planificaciones')
         </span>
       </div>
 
-      <!-- Contenido pedagógico -->
-      <div class="contenido-grid">
+      <!-- Contenido pedagógico: preview real si existe "contenido", si no fallback plano -->
+      <PlanificacionAnualPreview
+        v-if="plan.contenido"
+        :datos="plan.contenido"
+        :planificacion-id="plan.id"
+        :solo-lectura="true"
+      />
+
+      <div v-else class="contenido-grid">
         <div class="contenido-card">
           <h3><i class="ti ti-target"></i> Aprendizajes esperados</h3>
           <p>{{ plan.aprendizajes_esperados }}</p>
@@ -196,10 +204,9 @@ const volver = () => router.push('/director/planificaciones')
                 </span>
                 <span class="historial-fecha">{{ formatearFecha(h.fecha) }}</span>
               </div>
-<p v-if="h.observaciones" class="historial-comentario">
-  "{{ h.observaciones }}"
-</p>
-
+              <p v-if="h.observaciones" class="historial-comentario">
+                "{{ h.observaciones }}"
+              </p>
             </div>
           </div>
         </div>
@@ -227,7 +234,7 @@ const volver = () => router.push('/director/planificaciones')
 </template>
 
 <style scoped>
-.page-wrapper { width: 100%; max-width: 820px; }
+.page-wrapper { width: 100%; max-width: 820px; margin: 0 auto; }
 .estado-info { display: flex; align-items: center; gap: 8px; color: #5a6a7a; font-size: 14px; padding: 2rem 0; }
 .estado-error { display: flex; align-items: center; gap: 8px; color: #c0392b; font-size: 14px; background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2); border-radius: 10px; padding: 1rem 1.25rem; }
 @keyframes girar { to { transform: rotate(360deg); } }
@@ -299,4 +306,25 @@ const volver = () => router.push('/director/planificaciones')
 .btn-confirmar-modal { display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; border: 2px solid #1e40af; border-radius: 999px; padding: 9px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
 .btn-confirmar-modal:hover { background: #1d4ed8; }
 .btn-confirmar-modal:disabled, .btn-cancelar-modal:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  color: #2563eb;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  transition: color 0.15s, gap 0.15s;
+}
+.btn-volver:hover {
+  color: #1d4ed8;
+  gap: 10px;
+}
+.dark-mode .btn-volver { color: #60a5fa; }
+.dark-mode .btn-volver:hover { color: #93c5fd; }
 </style>

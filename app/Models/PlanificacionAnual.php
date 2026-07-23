@@ -17,6 +17,11 @@ class PlanificacionAnual extends Model
         'criterios',
         'bibliografia',
         'diagnostico',
+        'contenido',
+        'grado',
+        'ciclo',
+        'anio',
+        'saberes_transversales',
         'areas_id',
         'persona_cargo_cursado_id',
         'tipo_planificacion',
@@ -24,6 +29,7 @@ class PlanificacionAnual extends Model
 
     protected $casts = [
         'fecha_presentacion' => 'date',
+        'contenido' => 'array',
     ];
 
     // Pertenece a un área
