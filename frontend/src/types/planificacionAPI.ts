@@ -55,6 +55,11 @@ export interface PlanificacionAnualAPI {
   criterios: string
   bibliografia: string
   diagnostico: string
+  contenido: DatosAnual
+  grado: string
+  ciclo: string
+  anio: string
+  saberes_transversales: string
   areas_id: number
   persona_cargo_cursado_id: number
   tipo_planificacion: string

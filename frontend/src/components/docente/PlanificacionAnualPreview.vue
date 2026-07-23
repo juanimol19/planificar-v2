@@ -4,10 +4,13 @@ import apiClient from '@/api/axios'
 import type { DatosAnual } from '@/types/planificacion'
 import { useExportarPlanificacion } from '@/composables/useExportarPlanificacion'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   datos: DatosAnual
   planificacionId: number | null
-}>()
+  soloLectura?: boolean
+}>(), {
+  soloLectura: false,
+})
 
 const { exportarPDF, exportarWordAnual } = useExportarPlanificacion()
 
@@ -21,11 +24,11 @@ async function confirmarPresentar() {
   presentando.value = true
   errorPresentar.value = null
   try {
-await apiClient.post('/estados-anual', {
-  estado: 'presentada',
-  fecha: new Date().toISOString().split('T')[0],
-  planificacion_anual_id: props.planificacionId,
-})
+    await apiClient.post('/estados-anual', {
+      estado: 'presentada',
+      fecha: new Date().toISOString().split('T')[0],
+      planificacion_anual_id: props.planificacionId,
+    })
     presentada.value = true
     mostrarModalPresentar.value = false
   } catch {
@@ -136,43 +139,44 @@ await apiClient.post('/estados-anual', {
     </div>
 
     <!-- Botones de exportación -->
-<div class="anual-export-buttons">
-  <button class="anual-btn-export anual-btn-pdf" @click="exportarPDF('preview-anual', 'planificacion_anual')">
-    <i class="ti ti-file-type-pdf"></i>
-    Descargar PDF
-  </button>
-  <button class="anual-btn-export anual-btn-word" @click="exportarWordAnual(props.datos)">
-    <i class="ti ti-file-type-docx"></i>
-    Descargar Word
-  </button>
-  <button
-    class="anual-btn-export anual-btn-presentar"
-    :disabled="presentada"
-    @click="mostrarModalPresentar = true"
-  >
-    <i :class="presentada ? 'ti ti-check' : 'ti ti-send'"></i>
-    {{ presentada ? 'Presentada' : 'Presentar al director' }}
-  </button>
-</div>
-
-<!-- Modal presentar -->
-<div v-if="mostrarModalPresentar" class="anual-modal-overlay">
-  <div class="anual-modal-presentar">
-    <p class="anual-modal-mensaje">
-      ¿Subir planificación? <strong>Se enviará al director para su revisión.</strong>
-    </p>
-    <p v-if="errorPresentar" class="anual-modal-error">{{ errorPresentar }}</p>
-    <div class="anual-modal-acciones">
-      <button class="anual-btn-modal anual-btn-cancelar" @click="mostrarModalPresentar = false">
-        Cancelar
+    <div class="anual-export-buttons">
+      <button class="anual-btn-export anual-btn-pdf" @click="exportarPDF('preview-anual', 'planificacion_anual')">
+        <i class="ti ti-file-type-pdf"></i>
+        Descargar PDF
       </button>
-      <button class="anual-btn-modal anual-btn-confirmar" :disabled="presentando" @click="confirmarPresentar">
-        <i class="ti ti-send"></i>
-        {{ presentando ? 'Enviando...' : 'Confirmar' }}
+      <button class="anual-btn-export anual-btn-word" @click="exportarWordAnual(props.datos)">
+        <i class="ti ti-file-type-docx"></i>
+        Descargar Word
+      </button>
+      <button
+        v-if="!props.soloLectura"
+        class="anual-btn-export anual-btn-presentar"
+        :disabled="presentada"
+        @click="mostrarModalPresentar = true"
+      >
+        <i :class="presentada ? 'ti ti-check' : 'ti ti-send'"></i>
+        {{ presentada ? 'Presentada' : 'Presentar al director' }}
       </button>
     </div>
-  </div>
-</div>
+
+    <!-- Modal presentar -->
+    <div v-if="!props.soloLectura && mostrarModalPresentar" class="anual-modal-overlay">
+      <div class="anual-modal-presentar">
+        <p class="anual-modal-mensaje">
+          ¿Subir planificación? <strong>Se enviará al director para su revisión.</strong>
+        </p>
+        <p v-if="errorPresentar" class="anual-modal-error">{{ errorPresentar }}</p>
+        <div class="anual-modal-acciones">
+          <button class="anual-btn-modal anual-btn-cancelar" @click="mostrarModalPresentar = false">
+            Cancelar
+          </button>
+          <button class="anual-btn-modal anual-btn-confirmar" :disabled="presentando" @click="confirmarPresentar">
+            <i class="ti ti-send"></i>
+            {{ presentando ? 'Enviando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
